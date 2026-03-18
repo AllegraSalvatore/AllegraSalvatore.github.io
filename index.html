@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">Loading…</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+
+<nav class="nav">
+  <div class="nav-logo" id="nav-logo"></div>
+  <div class="nav-links" id="nav-links"></div>
+</nav>
+
+<section class="hero" id="hero-section" style="padding:0">
+  <div class="hero-left"  id="hero-left"></div>
+  <div class="hero-right" id="hero-right"></div>
+</section>
+
+<div id="sections-root"></div>
+
+<footer>
+  <div class="footer-name"  id="footer-logo"></div>
+  <div class="footer-copy"  id="footer-copy"></div>
+  <div class="footer-links" id="footer-links"></div>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+const $   = id  => document.getElementById(id);
+const esc = s   => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const mk  = (tag, cls, html) => {
+  const e = document.createElement(tag);
+  if (cls)  e.className   = cls;
+  if (html) e.innerHTML   = html;
+  return e;
+};
+
+function logoHTML(logo, accent) {
+  const plain = logo.replace(accent, '').trim();
+  return `${esc(plain)}<span>${esc(accent)}</span>`;
+}
+
+// ─────────────────────────────────────────────
+// NAV
+// ─────────────────────────────────────────────
+function renderNav(site, nav) {
+  $('nav-logo').innerHTML = logoHTML(site.logo + site.logo_accent, site.logo_accent);
+  nav.forEach(item => {
+    const a = mk('a', 'nav-link');
+    a.href = item.href;
+    a.textContent = item.label;
+    $('nav-links').appendChild(a);
+  });
+}
+
+// ─────────────────────────────────────────────
+// HERO
+// ─────────────────────────────────────────────
+function renderHero(site, hero) {
+  const left = $('hero-left');
+  const nb = mk('div', 'name-block');
+  nb.innerHTML = `
+    <div class="name-line1">${esc(hero.name_line1)}</div>
+    <div class="name-line2">${esc(hero.name_line2)}</div>
+    <div class="hero-tagline">${esc(hero.tagline)}</div>`;
+  const pills = mk('div', 'disciplines');
+  (hero.disciplines || []).forEach(d => {
+    const s = mk('span', 'disc-pill');
+    s.textContent = d;
+    pills.appendChild(s);
+  });
+  left.appendChild(nb);
+  left.appendChild(pills);
+
+  const right = $('hero-right');
+  const vis = mk('div', 'hero-visual');
+  const pg  = mk('div', 'photo-grid'); pg.id = 'pgrid';
+  vis.appendChild(pg);
+  const bot = mk('div', 'hero-right-bottom');
+  bot.innerHTML = `
+    <div class="loc-line">Based in · ${esc(site.location)}</div>
+    <div class="hero-cta">${hero.cta_label}</div>
+    <div class="scroll-hint">${esc(hero.scroll_hint)}</div>`;
+  right.appendChild(vis);
+  right.appendChild(bot);
+}
+
+// ─────────────────────────────────────────────
+// SECTION BUILDERS  (one per "type")
+// ─────────────────────────────────────────────
+function buildCardGrid(sec) {
+  const wrap = mk('section', 'section-dark'); wrap.id = sec.id;
+  wrap.innerHTML = `<div class="sec-eyebrow">${esc(sec.eyebrow)}</div><div class="sec-title reveal">${esc(sec.title)}</div>`;
+  const grid = mk('div', 'card-grid reveal');
+  (sec.items || []).forEach(item => {
+    const a = mk('a', 'algo-card' + (item.enabled ? '' : ' disabled'));
+    a.href = item.enabled && item.href ? item.href : '#';
+    a.innerHTML = `
+      <div class="algo-num">${esc(item.num)}</div>
+      <div class="algo-name">${esc(item.name)}</div>
+      <div class="algo-desc">${esc(item.description)}</div>
+      <div class="algo-badge">${esc(item.badge)}</div>
+      <div class="algo-arrow">↗</div>`;
+    grid.appendChild(a);
+  });
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+function buildList(sec) {
+  const wrap = mk('section', 'section-light'); wrap.id = sec.id;
+  wrap.innerHTML = `<div class="sec-eyebrow">${esc(sec.eyebrow)}</div><div class="sec-title reveal">${esc(sec.title)}</div>`;
+  const list = mk('div', 'proj-list reveal');
+  (sec.items || []).forEach((item, idx) => {
+    const a = mk('a', 'proj-item'); a.href = item.href || '#';
+    const tags = (item.tags || []).map(t => `<span class="proj-tag">${esc(t)}</span>`).join('');
+    a.innerHTML = `
+      <div class="proj-n">${String(idx + 1).padStart(2, '0')}</div>
+      <div class="proj-body">
+        <div class="proj-name">${esc(item.name)}</div>
+        <div class="proj-sub">${esc(item.description)}</div>
+      </div>
+      <div class="proj-tags">${tags}</div>`;
+    list.appendChild(a);
+  });
+  wrap.appendChild(list);
+  return wrap;
+}
+
+function buildPhotography(sec) {
+  const wrap = mk('section', 'section-darker'); wrap.id = sec.id;
+  wrap.innerHTML = `<div class="sec-eyebrow">${esc(sec.eyebrow)}</div><div class="sec-title reveal">${esc(sec.title)}</div>`;
+  const mosaic = mk('div', 'photo-mosaic reveal');
+  (sec.mosaic || []).forEach(cell => {
+    const d = mk('div', 'pm-cell');
+    d.dataset.label = cell.label;
+    mosaic.appendChild(d);
+  });
+  const cta = mk('div', 'photo-cta reveal');
+  cta.innerHTML = `
+    <div class="photo-cta-text">${esc(sec.bio)}</div>
+    <a href="${sec.cta_href || '#'}" class="btn-outline">${esc(sec.cta_label)}</a>`;
+  wrap.appendChild(mosaic);
+  wrap.appendChild(cta);
+  return wrap;
+}
+
+function buildNotes(sec) {
+  const wrap = mk('section', 'section-dark'); wrap.id = sec.id;
+  wrap.innerHTML = `<div class="sec-eyebrow">${esc(sec.eyebrow)}</div><div class="sec-title reveal">${esc(sec.title)}</div>`;
+  const grid = mk('div', 'notes-grid reveal');
+  (sec.items || []).forEach(item => {
+    const a = mk('a', 'note-card'); a.href = item.href || '#';
+    const topics = (item.topics || []).map(t => `<span class="note-topic">${esc(t)}</span>`).join('');
+    a.innerHTML = `
+      <div class="note-date">${esc(item.date)}</div>
+      <div class="note-title">${esc(item.title)}</div>
+      <div class="note-excerpt">${esc(item.excerpt)}</div>
+      <div class="note-topics">${topics}</div>
+      <div class="note-corner">↗</div>`;
+    grid.appendChild(a);
+  });
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+function buildAbout(sec) {
+  const wrap = mk('section', 'section-light'); wrap.id = sec.id;
+  wrap.innerHTML = `<div class="sec-eyebrow">${esc(sec.eyebrow)}</div><div class="sec-title reveal">${esc(sec.title)}</div>`;
+  const grid = mk('div', 'about-grid');
+
+  const bio = mk('div', 'about-bio reveal');
+  (sec.bio || []).forEach(p => { const para = mk('p'); para.innerHTML = p; bio.appendChild(para); });
+  if (sec.bio_note) {
+    const n = mk('p', 'about-bio-note'); n.innerHTML = `<em>${sec.bio_note}</em>`; bio.appendChild(n);
+  }
+
+  const links = mk('div', 'about-links reveal');
+  (sec.links || []).forEach(link => {
+    const a = mk('a', 'about-link');
+    a.href = link.href || '#';
+    if (link.href && link.href.startsWith('http')) a.target = '_blank';
+    a.innerHTML = `
+      <span class="about-link-icon">${esc(link.icon)}</span>
+      <span class="about-link-text">${esc(link.label)}</span>
+      <span class="about-link-sub">${esc(link.sub)}</span>`;
+    links.appendChild(a);
+  });
+
+  grid.appendChild(bio);
+  grid.appendChild(links);
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+// Registry — add new section types here
+const SECTION_BUILDERS = {
+  'card-grid':   buildCardGrid,
+  'list':        buildList,
+  'photography': buildPhotography,
+  'notes':       buildNotes,
+  'about':       buildAbout,
+};
+
+function renderSections(sections) {
+  const root = $('sections-root');
+  sections.forEach(sec => {
+    const fn = SECTION_BUILDERS[sec.type];
+    if (fn) root.appendChild(fn(sec));
+    else console.warn('[site.json] Unknown section type:', sec.type);
+  });
+}
+
+// ─────────────────────────────────────────────
+// FOOTER
+// ─────────────────────────────────────────────
+function renderFooter(site, nav) {
+  $('footer-logo').innerHTML = logoHTML(site.logo + site.logo_accent, site.logo_accent);
+  $('footer-copy').textContent = site.footer_copy || '';
+  nav.forEach(item => {
+    const a = mk('a', 'footer-link');
+    a.href = item.href;
+    a.textContent = item.label;
+    $('footer-links').appendChild(a);
+  });
+}
+
+// ─────────────────────────────────────────────
+// INTERACTIVITY
+// ─────────────────────────────────────────────
+function initCursor() {
+  const cursor = $('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top  = e.clientY + 'px';
+  });
+  return function attachHover() {
+    document.querySelectorAll('a, button, .algo-card, .proj-item, .note-card').forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.classList.add('big'));
+      el.addEventListener('mouseleave', () => cursor.classList.remove('big'));
+    });
+  };
+}
+
+function initPhotoGrid() {
+  const pgrid = $('pgrid');
+  if (!pgrid) return;
+  for (let i = 0; i < 25; i++) {
+    const c = document.createElement('div');
+    c.className = 'pg-cell' + (Math.random() < .06 ? ' pg-accent' : '');
+    c.style.animationDelay    = (Math.random() * 2) + 's';
+    c.style.animationDuration = (2 + Math.random() * 3) + 's';
+    pgrid.appendChild(c);
+  }
+}
+
+function initScrollReveal() {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const siblings = [...e.target.parentElement.querySelectorAll('.reveal')];
+        const i = siblings.indexOf(e.target);
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(r => obs.observe(r));
+}
+
+// ─────────────────────────────────────────────
+// FETCH HELPERS
+// ─────────────────────────────────────────────
+
+// Fetches a URL and returns parsed JSON.
+// If the value is already an object (inlined), returns it as-is.
+async function fetchOrInline(value) {
+  if (typeof value === 'string') {
+    const res = await fetch(value);
+    if (!res.ok) throw new Error(`Could not load ${value} (HTTP ${res.status})`);
+    return res.json();
+  }
+  return value; // already an inline object
+}
+
+// ─────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────
+async function boot() {
+  const attachHover = initCursor(); // cursor works immediately
+
+  try {
+    // 1. Load master manifest
+    const manifestRes = await fetch('site.json');
+    if (!manifestRes.ok) throw new Error(`site.json HTTP ${manifestRes.status}`);
+    const manifest = await manifestRes.json();
+
+    const { site, nav } = manifest;
+
+    // 2. Resolve hero + all sections in parallel
+    const [hero, ...sections] = await Promise.all([
+      fetchOrInline(manifest.hero),
+      ...manifest.sections.map(fetchOrInline)
+    ]);
+
+    // 3. Render
+    document.title      = site.title || 'My Site';
+    $('html-root').lang = site.lang  || 'en';
+
+    renderNav(site, nav);
+    renderHero(site, hero);
+    renderSections(sections);
+    renderFooter(site, nav);
+
+  } catch (err) {
+    console.error('Boot error:', err.message);
+    $('nav-logo').textContent    = document.title = 'My Site';
+    $('footer-logo').textContent = 'My Site';
+    $('sections-root').innerHTML = `
+      <section style="padding:4rem;font-family:var(--mono);font-size:.8rem;color:var(--silver);line-height:2">
+        <strong style="color:var(--rust)">⚠ ${err.message}</strong><br>
+        Make sure <code>site.json</code> and all <code>data/*.json</code> files are in the repo
+        and served over HTTP.<br>
+        Local quick-start: <code>npx serve .</code> &nbsp;·&nbsp; <code>python -m http.server</code>
+      </section>`;
+  }
+
+  initPhotoGrid();
+  initScrollReveal();
+  attachHover();
+}
+
+boot();
+</script>
+</body>
+</html>
