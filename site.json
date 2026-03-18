@@ -1,0 +1,28 @@
+{
+  "site": {
+    "title": "SAL ALL",
+    "logo": "SAL",
+    "logo_accent": "ALL",
+    "lang": "en",
+    "location": "Sicily, IT",
+    "footer_copy": "© 2024 · All rights reserved · Built with craft"
+  },
+
+  "nav": [
+    { "label": "Algorithms",  "href": "#algorithms"  },
+    { "label": "Projects",    "href": "#projects"    },
+    { "label": "Photography", "href": "#photography" },
+    { "label": "Notes",       "href": "#notes"       },
+    { "label": "About",       "href": "#about"       }
+  ],
+
+  "hero": "data/hero.json",
+
+  "sections": [
+    "data/algorithms.json",
+    "data/projects.json",
+    "data/photography.json",
+    "data/notes.json",
+    "data/about.json"
+  ]
+}
