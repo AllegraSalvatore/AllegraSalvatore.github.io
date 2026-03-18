@@ -9,7 +9,7 @@
       "title": "Why Johnson's Algorithm Beats Floyd-Warshall on Sparse Graphs",
       "excerpt": "An intuitive walkthrough of reweighting, the role of Bellman-Ford as a preprocessor, and the asymptotic crossover point.",
       "topics": ["APSP", "Graphs", "Complexity"],
-      "href": "https://allegrasalvatore.github.io/johnson_vs_floyd_warshall_grafi_sparsi.html"
+      "href": "https://allegrasalvatore.github.io/notes/johnson_vs_floyd_warshall_grafi_sparsi.html"
     },
     {
       "date": "2024 · ML",
