@@ -1,0 +1,29 @@
+{
+  "id": "notes",
+  "type": "notes",
+  "eyebrow": "Writing & Study Notes",
+  "title": "Notes",
+  "items": [
+    {
+      "date": "2024 · Algorithms",
+      "title": "Why Johnson's Algorithm Beats Floyd-Warshall on Sparse Graphs",
+      "excerpt": "An intuitive walkthrough of reweighting, the role of Bellman-Ford as a preprocessor, and the asymptotic crossover point.",
+      "topics": ["APSP", "Graphs", "Complexity"],
+      "href": "#"
+    },
+    {
+      "date": "2024 · ML",
+      "title": "Gradient Descent — an Intuition Beyond the Formula",
+      "excerpt": "Going from the textbook update rule to a geometric understanding of loss landscapes, saddle points, and momentum.",
+      "topics": ["ML", "Optimization"],
+      "href": "#"
+    },
+    {
+      "date": "2024 · Photography",
+      "title": "The Mathematics of Light: Exposure as an Algorithm",
+      "excerpt": "ISO, aperture, shutter speed as a three-variable optimization problem. The histogram as a loss function.",
+      "topics": ["Photography", "Optics"],
+      "href": "#"
+    }
+  ]
+}
