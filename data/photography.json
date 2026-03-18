@@ -1,0 +1,16 @@
+{
+  "id": "photography",
+  "type": "photography",
+  "eyebrow": "Visual Work",
+  "title": "Photography",
+  "bio": "Photography as a way of seeing — light, geometry, the decisive moment. A parallel practice to the precision of algorithms.",
+  "cta_label": "View Gallery →",
+  "cta_href": "#",
+  "mosaic": [
+    { "label": "Landscape" },
+    { "label": "Portrait"  },
+    { "label": "Urban"     },
+    { "label": "Abstract"  },
+    { "label": "Light"     }
+  ]
+}

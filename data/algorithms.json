@@ -1,0 +1,56 @@
+{
+  "id": "algorithms",
+  "type": "card-grid",
+  "eyebrow": "Interactive Simulations",
+  "title": "Algorithms\n& Data Structures",
+  "items": [
+    {
+      "num": "01 · APSP",
+      "name": "Matrix Mult.",
+      "description": "Slow & fast APSP via matrix extension operator",
+      "badge": "Θ(n⁴) · Θ(n³ log n)",
+      "href": "apsp_matrix_mult.html",
+      "enabled": true
+    },
+    {
+      "num": "02 · APSP",
+      "name": "Floyd-Warshall",
+      "description": "Dynamic programming over intermediate vertices k",
+      "badge": "Θ(n³)",
+      "href": "apsp_floyd_warshall.html",
+      "enabled": true
+    },
+    {
+      "num": "03 · APSP",
+      "name": "Johnson",
+      "description": "Reweighting + Bellman-Ford + Dijkstra for sparse graphs",
+      "badge": "O(V² log V + VE)",
+      "href": "apsp_johnson.html",
+      "enabled": true
+    },
+    {
+      "num": "04 · Sorting",
+      "name": "Counting Sort",
+      "description": "Non-comparative stable sort on integer keys in [0,k]",
+      "badge": "Θ(n+k)",
+      "href": "counting_sort.html",
+      "enabled": true
+    },
+    {
+      "num": "05 · Sorting",
+      "name": "Radix Sort",
+      "description": "Digit-by-digit stable sort using counting sort as subroutine",
+      "badge": "Θ(d(n+k))",
+      "href": "",
+      "enabled": false
+    },
+    {
+      "num": "06 · Trees",
+      "name": "Red-Black Tree",
+      "description": "Self-balancing BST with O(log n) guaranteed operations",
+      "badge": "O(log n)",
+      "href": "",
+      "enabled": false
+    }
+  ]
+}
