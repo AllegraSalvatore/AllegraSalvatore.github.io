@@ -4,9 +4,7 @@
   "eyebrow": "Who I Am",
   "title": "About",
   "bio": [
-    "I'm <strong>Sal All</strong> — a developer, researcher, and photographer based in <em>Sicily</em>. I work at the intersection of algorithms, data, and visual thinking.",
-    "My technical work spans <strong>algorithm design and analysis</strong>, <strong>software development</strong>, <strong>machine learning</strong>, and <strong>data science</strong>. I'm particularly interested in making complex computational ideas accessible through interactive visualization.",
-    "Away from the keyboard I photograph — chasing light, geometry, and the small decisive moments that most people walk past. The same precision that makes a good algorithm makes a good photograph."
+    ""
   ],
   "bio_note": "This site is a living index: work in progress, updated as new projects and notes accumulate.",
   "links": [
