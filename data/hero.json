@@ -1,16 +1,13 @@
 {
   "name_line1": "SAL",
   "name_line2": "ALL",
-  "tagline": "Software · Algorithms · Research · Photography",
+  "tagline": "Software · Algorithms · Photography",
   "cta_label": "Work & Thought",
   "scroll_hint": "Scroll to explore",
   "disciplines": [
     "Computer Science",
     "Algorithms",
-    "Machine Learning",
-    "Data Science",
     "Software Dev",
     "Photography",
-    "Research"
   ]
 }
