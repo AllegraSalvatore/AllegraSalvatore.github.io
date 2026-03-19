@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APSP · Floyd-Warshall</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;1,400&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff;
+  --off: #f5f5f0;
+  --paper: #fafaf8;
+  --grid: #e8e8e3;
+  --grid2: #d4d4cc;
+  --ink: #111110;
+  --ink2: #333330;
+  --ink3: #888880;
+  --accent: #1a5276;   /* deep blue */
+  --accent-tint: #eaf0f8;
+  --ok: #1a5c2e;
+  --ok-tint: #eaf4ee;
+  --warn: #7d4e00;
+  --warn-tint: #fdf5e6;
+  --hilite: #6b21a8;
+  --hilite-tint: #f5f0fd;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  /* subtle dot grid */
+  background-image: radial-gradient(circle, #d0d0c8 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-attachment: fixed;
+}
+
+/* ── Header ── */
+.header {
+  background: white;
+  border-bottom: 2px solid var(--ink);
+  padding: 1.8rem 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+.header::before {
+  content: '';
+  position: absolute;
+  bottom: -6px; left: 0; right: 0;
+  height: 1px;
+  background: var(--ink);
+}
+.header-left .tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: .5rem;
+}
+.header-left h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: .95;
+  letter-spacing: -.02em;
+}
+.header-left h1 span {
+  font-style: italic;
+  color: var(--accent);
+}
+.header-right {
+  text-align: right;
+}
+.header-right .big-o {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1.8rem;
+  color: var(--accent);
+  line-height: 1;
+}
+.header-right .big-o-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  color: var(--ink3);
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+/* ── Layout ── */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 3rem;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+@media(max-width:800px){ .grid-2 { grid-template-columns: 1fr; } }
+
+/* ── Card ── */
+.card {
+  background: white;
+  border: 1.5px solid var(--grid);
+  padding: 1.3rem;
+}
+.card-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-bottom: .6rem;
+  margin-bottom: .8rem;
+  border-bottom: 1px solid var(--grid);
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.card-title::before { content: '▸'; font-size: .7rem; }
+
+/* ── Theory ── */
+.theory-body { font-size: .8rem; line-height: 1.75; color: var(--ink2); }
+.theory-body + .theory-body { margin-top: .5rem; }
+.formula {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .75rem;
+  background: var(--accent-tint);
+  border-left: 3px solid var(--accent);
+  padding: .5rem .8rem;
+  margin: .7rem 0;
+  color: var(--accent);
+  font-weight: 600;
+}
+.cpx-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .5rem;
+  margin-top: .8rem;
+}
+.cpx-box {
+  border: 1px solid var(--grid);
+  padding: .5rem .7rem;
+}
+.cpx-box .lbl { font-family: 'IBM Plex Mono', monospace; font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink3); }
+.cpx-box .val { font-family: 'IBM Plex Mono', monospace; font-size: .82rem; font-weight: 600; color: var(--accent); }
+
+/* ── Pseudo ── */
+.pseudo {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .72rem;
+  line-height: 2;
+  background: var(--off);
+  border: 1.5px solid var(--grid);
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+}
+.pl { display: block; padding: .05rem .3rem; border-radius: 2px; white-space: pre; color: var(--ink3); transition: all .2s; }
+.pl.active { background: var(--warn-tint); color: var(--warn); font-weight: 600; }
+.pl.updated { background: var(--ok-tint); color: var(--ok); font-weight: 600; }
+.kw { color: var(--accent); font-weight: 600; }
+.fn { color: var(--ink); font-weight: 600; }
+.cmt { color: var(--grid2); font-style: italic; }
+
+/* ── Graph ── */
+.graph-box {
+  border: 1.5px solid var(--grid);
+  background: var(--off);
+  padding: .5rem;
+  display: flex;
+  justify-content: center;
+}
+svg.graph { width: 100%; max-width: 300px; height: 230px; }
+
+/* ── Controls ── */
+.controls {
+  background: white;
+  border: 1.5px solid var(--grid);
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  padding: .8rem 1.2rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .42rem 1rem;
+  border: 1.5px solid var(--ink);
+  background: white;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn:hover { background: var(--ink); color: white; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+.btn.primary:hover { background: #12395e; }
+.sp-lbl { font-family: 'IBM Plex Mono', monospace; font-size: .6rem; color: var(--ink3); letter-spacing: .1em; }
+input[type=range] { accent-color: var(--accent); width: 80px; cursor: pointer; }
+
+/* ── Step info ── */
+.step-box {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .73rem;
+  padding: .65rem 1rem;
+  background: var(--accent-tint);
+  border-left: 3px solid var(--accent);
+  color: var(--accent);
+  margin-bottom: .8rem;
+  min-height: 2.4rem;
+  line-height: 1.5;
+}
+
+/* ── Progress ── */
+.prog-wrap { height: 3px; background: var(--grid); margin-bottom: 1.2rem; }
+.prog-fill { height: 100%; background: var(--accent); transition: width .3s; }
+
+/* ── Matrix ── */
+.mat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+@media(max-width:1000px){ .mat-grid { grid-template-columns: 1fr 1fr; } }
+@media(max-width:600px){ .mat-grid { grid-template-columns: 1fr; } }
+
+.card.frozen { opacity: .72; border-style: dashed; }
+.card.frozen .card-title { color: var(--ink3); }
+.card.prev-card { border-color: #7d4e00; }
+.card.prev-card .card-title { color: #7d4e00; }
+.mat-badge {
+  font-size: .58rem; letter-spacing: .1em; text-transform: uppercase;
+  padding: .12rem .45rem; border-radius: 2px; margin-left: .3rem;
+  vertical-align: middle;
+}
+.mb-fix { background: var(--grid); color: var(--ink3); }
+.mb-prev { background: #fdf5e6; color: #7d4e00; border: 1px solid #7d4e00; }
+.mb-curr { background: var(--accent-tint); color: var(--accent); border: 1px solid var(--accent); }
+.mb-pi { background: #f2edfb; color: var(--hilite); border: 1px solid var(--hilite); }
+
+table.mx {
+  border-collapse: collapse;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .71rem;
+  width: 100%;
+}
+table.mx th, table.mx td {
+  border: 1px solid var(--grid);
+  padding: .36rem .55rem;
+  text-align: center;
+  min-width: 2.3rem;
+  transition: background .25s, color .25s;
+}
+table.mx th { background: var(--off); color: var(--ink3); font-weight: 600; }
+table.mx td { background: white; color: var(--ink); }
+table.mx td.k-row, table.mx td.k-col { background: var(--hilite-tint); color: var(--hilite); font-weight: 600; }
+table.mx td.upd { background: var(--ok-tint); color: var(--ok); font-weight: 700; }
+table.mx td.cur { background: var(--warn-tint); color: var(--warn); font-weight: 600; }
+table.mx td.inf { color: var(--grid2); }
+
+/* ── K indicator ── */
+.k-indicator {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .7rem;
+  color: var(--hilite);
+  background: var(--hilite-tint);
+  border: 1px solid var(--hilite);
+  display: inline-block;
+  padding: .25rem .6rem;
+  margin-left: auto;
+}
+
+/* ── Log ── */
+.log-body {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .65rem;
+  height: 100px;
+  overflow-y: auto;
+  line-height: 1.9;
+  color: var(--ink3);
+}
+.log-body .e { display: block; border-bottom: 1px solid var(--grid); padding: .03rem 0; }
+.log-body .e.upd { color: var(--ok); }
+.log-body .e.phase { color: var(--accent); font-weight: 600; }
+
+footer {
+  border-top: 2px solid var(--ink);
+  padding: 1rem 3rem;
+  display: flex;
+  justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .62rem;
+  color: var(--ink3);
+  letter-spacing: .08em;
+  background: white;
+  margin-top: 2rem;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="tag">APSP · Algoritmo II di III · Cormen CLRS</div>
+    <h1>Floyd-<span>Warshall</span></h1>
+  </div>
+  <div class="header-right">
+    <div class="big-o">Θ(n³)</div>
+    <div class="big-o-label">Complessità temporale</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="grid-2">
+    <!-- Theory -->
+    <div class="card">
+      <div class="card-title">Teoria</div>
+      <div class="theory-body">
+        Floyd-Warshall definisce <strong>D<sup>(k)</sup>[i][j]</strong> come il peso del cammino minimo da <em>i</em> a <em>j</em> i cui vertici intermedi appartengono all'insieme <em>{1,…,k}</em>.
+      </div>
+      <div class="formula">D⁽⁰⁾[i][j] = W[i][j]</div>
+      <div class="theory-body">Il passo ricorsivo considera se conviene passare per il vertice k:</div>
+      <div class="formula">D⁽ᵏ⁾[i][j] = min( D⁽ᵏ⁻¹⁾[i][j], D⁽ᵏ⁻¹⁾[i][k] + D⁽ᵏ⁻¹⁾[k][j] )</div>
+      <div class="theory-body">Π[i][j] viene aggiornato solo quando si trova un cammino migliorativo tramite k. Per rilevare <strong>cicli negativi</strong>: se D[i][i] &lt; 0 per qualche i, il grafo ne contiene uno.</div>
+      <div class="cpx-grid">
+        <div class="cpx-box"><div class="lbl">Temporale</div><div class="val">Θ(n³)</div></div>
+        <div class="cpx-box"><div class="lbl">Spaziale</div><div class="val">Θ(n²)</div></div>
+        <div class="cpx-box"><div class="lbl">Predecessori Π</div><div class="val">Θ(n²)</div></div>
+        <div class="cpx-box"><div class="lbl">Cicli negativi</div><div class="val">D[i][i]&lt;0</div></div>
+      </div>
+    </div>
+
+    <div>
+      <!-- Pseudo -->
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-title">Pseudocodice</div>
+        <div class="pseudo">
+          <span class="pl"><span class="fn">FLOYD-WARSHALL</span>(W):</span>
+          <span class="pl" id="fl0">  n = W.rows</span>
+          <span class="pl" id="fl1">  D = W  <span class="cmt">// D⁽⁰⁾ = W</span></span>
+          <span class="pl" id="fl2">  Π[i][j] = i  <span class="cmt">se W[i][j] &lt; ∞</span></span>
+          <span class="pl" id="fl3">  <span class="kw">for</span> k = 1 <span class="kw">to</span> n:</span>
+          <span class="pl" id="fl4">    <span class="kw">for</span> i = 1 <span class="kw">to</span> n:</span>
+          <span class="pl" id="fl5">      <span class="kw">for</span> j = 1 <span class="kw">to</span> n:</span>
+          <span class="pl" id="fl6">        <span class="kw">if</span> D[i][j] &gt; D[i][k] + D[k][j]:</span>
+          <span class="pl" id="fl7">          D[i][j] = D[i][k] + D[k][j]</span>
+          <span class="pl" id="fl8">          Π[i][j] = Π[k][j] <span class="cmt">// predecessore</span></span>
+          <span class="pl">  <span class="kw">return</span> D, Π</span>
+        </div>
+      </div>
+      <!-- Graph -->
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between">
+          Grafo di input
+          <span class="k-indicator" id="k-ind" style="display:none">k = ?</span>
+        </div>
+        <div class="graph-box">
+          <svg class="graph" id="graph" viewBox="0 0 300 230"></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn primary" id="btn-play">▶ Play</button>
+    <button class="btn" id="btn-step">→ Step</button>
+    <button class="btn" id="btn-reset">↺ Reset</button>
+    <span class="sp-lbl">Velocità:</span>
+    <input type="range" id="speed" min="100" max="1500" value="700" step="100">
+  </div>
+
+  <div class="step-box" id="step-info">Premi Play o Step per avviare la simulazione.</div>
+  <div class="prog-wrap"><div class="prog-fill" id="progress" style="width:0%"></div></div>
+
+  <!-- Matrices -->
+  <div class="mat-grid">
+    <div class="card frozen">
+      <div class="card-title">W — Pesi iniziali <span class="mat-badge mb-fix">fisso</span></div>
+      <div id="matW"></div>
+    </div>
+    <div class="card prev-card">
+      <div class="card-title">D<sup>(k−1)</sup> — Passo precedente <span class="mat-badge mb-prev">prev</span></div>
+      <div id="matDprev"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">D<sup>(k)</sup> — Corrente <span class="mat-badge mb-curr">live</span></div>
+      <div id="matD"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Π<sup>(k)</sup> — Predecessori <span class="mat-badge mb-pi">Π</span></div>
+      <div id="matPi"></div>
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="card">
+    <div class="card-title">Log operazioni</div>
+    <div class="log-body" id="log"></div>
+  </div>
+
+</div>
+
+<footer>
+  <span>APSP · Floyd-Warshall</span>
+  <span>Cormen, Leiserson, Rivest, Stein · Introduction to Algorithms</span>
+</footer>
+
+<script>
+const INF=Infinity, N=4;
+const nodes=['1','2','3','4'];
+const W=[[0,3,INF,7],[8,0,2,INF],[5,INF,0,1],[2,INF,-4,0]];
+const edges=[];
+for(let i=0;i<N;i++) for(let j=0;j<N;j++) if(i!==j&&W[i][j]!==INF) edges.push([i,j,W[i][j]]);
+const pos=[[75,45],[225,45],[225,185],[75,185]];
+
+function fv(v){ return v===INF?'∞':v; }
+function dc(m){ return m.map(r=>r.slice()); }
+
+function drawGraph(hlEdges=[], hlNodes=[]){
+  const svg=document.getElementById('graph');
+  let d=`<defs><marker id="arr" markerWidth="8" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L0,7 L8,3.5 z" fill="#888880" opacity=".7"/></marker></defs>`;
+  for(const [u,v,w] of edges){
+    const [x1,y1]=pos[u],[x2,y2]=pos[v];
+    const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy),r=20;
+    const sx=x1+dx/len*r,sy=y1+dy/len*r,ex=x2-dx/len*(r+8),ey=y2-dy/len*(r+8);
+    const cx=(sx+ex)/2-dy/len*14,cy=(sy+ey)/2+dx/len*14;
+    const hl=hlEdges.some(e=>e[0]===u&&e[1]===v);
+    d+=`<path d="M${sx},${sy} Q${cx},${cy} ${ex},${ey}" stroke="${hl?'#1a5276':'#d4d4cc'}" stroke-width="${hl?2.5:1.5}" fill="none" marker-end="url(#arr)" opacity="${hl?1:.9}"/>`;
+    const lx=(sx+2*cx+ex)/4,ly=(sy+2*cy+ey)/4;
+    d+=`<text x="${lx}" y="${ly}" fill="${hl?'#1a5276':'#888880'}" font-size="11" font-family="IBM Plex Mono,monospace" text-anchor="middle">${w}</text>`;
+  }
+  for(let i=0;i<N;i++){
+    const [x,y]=pos[i],hl=hlNodes.includes(i);
+    const isK=hlNodes[0]===i&&hl;
+    d+=`<circle cx="${x}" cy="${y}" r="20" fill="${isK?'#f5f0fd':hl?'#eaf0f8':'white'}" stroke="${isK?'#6b21a8':hl?'#1a5276':'#888880'}" stroke-width="${hl?2.5:1}"/>`;
+    d+=`<text x="${x}" y="${y}" fill="${isK?'#6b21a8':hl?'#1a5276':'#111110'}" font-size="13" font-family="Cormorant Garamond,serif" font-weight="700" text-anchor="middle" dominant-baseline="middle">${nodes[i]}</text>`;
+  }
+  svg.innerHTML=d;
+}
+
+function buildMx(id, mat, hlFn){
+  const wrap=document.getElementById(id);
+  let h='<table class="mx"><thead><tr><th></th>';
+  for(let j=0;j<N;j++) h+=`<th>${nodes[j]}</th>`;
+  h+='</tr></thead><tbody>';
+  for(let i=0;i<N;i++){
+    h+=`<tr><th>${nodes[i]}</th>`;
+    for(let j=0;j<N;j++){
+      const cls=hlFn?hlFn(i,j):'';
+      const v=mat[i][j];
+      h+=`<td class="${cls}${v===INF?' inf':''}" id="${id}-${i}-${j}">${fv(v)}</td>`;
+    }
+    h+='</tr>';
+  }
+  h+='</tbody></table>';
+  wrap.innerHTML=h;
+}
+
+function logAdd(msg,cls=''){
+  const el=document.getElementById('log');
+  const s=document.createElement('span');
+  s.className=`e ${cls}`;
+  s.textContent=msg;
+  el.appendChild(s);
+  el.scrollTop=el.scrollHeight;
+}
+
+function unhl(){ document.querySelectorAll('.pl').forEach(l=>l.classList.remove('active','updated')); }
+function hlL(...ids){ ids.forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.add('active'); }); }
+function hlLU(...ids){ ids.forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.add('updated'); }); }
+
+function initPi(){
+  return Array.from({length:N},(_,i)=>Array.from({length:N},(_,j)=>i!==j&&W[i][j]!==INF?i:-1));
+}
+
+let steps=[], stepIdx=0, playTimer=null;
+
+function buildSteps(){
+  steps=[];
+  let D=dc(W), Pi=initPi();
+  steps.push({type:'init',D:dc(D),prevD:dc(W),Pi:dc(Pi),k:-1,msg:'Inizializzazione D⁽⁰⁾ = W · costruzione Π dagli archi diretti'});
+  for(let k=0;k<N;k++){
+    const prevDSnap=dc(D);
+    steps.push({type:'new_k',D:dc(D),prevD:prevDSnap,Pi:dc(Pi),k,msg:`─── k = ${k+1} · vertice intermedio: ${nodes[k]} ───`});
+    for(let i=0;i<N;i++){
+      for(let j=0;j<N;j++){
+        const cand=(D[i][k]===INF||D[k][j]===INF)?INF:D[i][k]+D[k][j];
+        const imp=cand<D[i][j];
+        steps.push({type:'cmp',k,i,j,cand,imp,D:dc(D),prevD:prevDSnap,Pi:dc(Pi),
+          msg:imp
+            ?`D[${i+1}][${j+1}]: ${fv(D[i][j])} → ${fv(cand)}  (via k=${k+1}: D[${i+1}][${k+1}](${fv(prevDSnap[i][k])}) + D[${k+1}][${j+1}](${fv(prevDSnap[k][j])}))`
+            :`D[${i+1}][${j+1}]: ${fv(D[i][j])} ≤ ${fv(D[i][k])}+${fv(D[k][j])} · invariato`});
+        if(imp){ D[i][j]=cand; Pi[i][j]=Pi[k][j]; }
+      }
+    }
+  }
+  steps.push({type:'done',D:dc(D),prevD:dc(D),Pi:dc(Pi),k:N,msg:'✓ Floyd-Warshall completato · tutti gli APSP trovati'});
+}
+
+function renderStep(s){
+  unhl();
+  document.getElementById('step-info').textContent=s.msg;
+  document.getElementById('progress').style.width=((stepIdx+1)/steps.length*100)+'%';
+
+  if(s.k>=0&&s.k<N){
+    document.getElementById('k-ind').style.display='inline-block';
+    document.getElementById('k-ind').textContent=`k = ${s.k+1}`;
+  } else {
+    document.getElementById('k-ind').style.display='none';
+  }
+
+  // W always static
+  buildMx('matW',W,(i,j)=>{
+    if(s.type==='cmp'&&(i===s.k||j===s.k)) return 'k-row';
+    return '';
+  });
+
+  // D prev — shows the snapshot at start of iteration k
+  buildMx('matDprev',s.prevD,(i,j)=>{
+    if(s.type!=='cmp') return '';
+    if(i===s.i&&j===s.k) return 'k-row';   // D[i][k]
+    if(i===s.k&&j===s.j) return 'k-row';   // D[k][j]
+    return '';
+  });
+
+  // D current (in-place)
+  buildMx('matD',s.D,(i,j)=>{
+    if(s.type!=='cmp') return '';
+    if(i===s.k||j===s.k) return 'k-row';
+    if(i===s.i&&j===s.j) return s.imp?'upd':'cur';
+    return '';
+  });
+
+  buildMx('matPi',s.Pi,()=>'');
+  for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+    const el=document.getElementById(`matPi-${i}-${j}`);
+    if(el) el.textContent=s.Pi[i][j]==-1?'—':nodes[s.Pi[i][j]];
+  }
+
+  if(s.type==='init'){ hlL('fl0','fl1','fl2'); }
+  else if(s.type==='new_k'){ hlL('fl3'); }
+  else if(s.type==='cmp'){
+    hlL('fl4','fl5','fl6');
+    if(s.imp){ hlLU('fl7','fl8'); }
+  }
+
+  if(s.type==='cmp') drawGraph([[s.i,s.k],[s.k,s.j]],[s.k,s.i,s.j]);
+  else if(s.type==='new_k') drawGraph([],[s.k]);
+  else drawGraph();
+
+  if(s.type==='cmp'&&s.imp) logAdd(`D[${s.i+1}][${s.j+1}] = ${fv(s.cand)}  Π = ${s.Pi[s.k][s.j]==-1?'—':nodes[s.Pi[s.k][s.j]]}`, 'upd');
+  else if(s.type==='new_k') logAdd(`──── k = ${s.k+1} (${nodes[s.k]}) ────`, 'phase');
+  else if(s.type==='done') logAdd('✓ Completato.', 'phase');
+}
+
+function doStep(){
+  if(stepIdx>=steps.length){ stopPlay(); return; }
+  renderStep(steps[stepIdx]);
+  stepIdx++;
+  if(stepIdx>=steps.length) stopPlay();
+}
+function stopPlay(){ clearInterval(playTimer); playTimer=null; document.getElementById('btn-play').textContent='▶ Play'; }
+
+function reset(){
+  stopPlay(); stepIdx=0; buildSteps();
+  document.getElementById('step-info').textContent='Premi Play o Step per avviare la simulazione.';
+  document.getElementById('progress').style.width='0%';
+  document.getElementById('log').innerHTML='';
+  document.getElementById('k-ind').style.display='none';
+  buildMx('matW',W,()=>'');
+  buildMx('matDprev',W,()=>'');
+  buildMx('matD',W,()=>'');
+  const ip=initPi();
+  buildMx('matPi',ip,()=>'');
+  for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+    const el=document.getElementById(`matPi-${i}-${j}`);
+    if(el) el.textContent=ip[i][j]==-1?'—':nodes[ip[i][j]];
+  }
+  drawGraph(); unhl();
+}
+
+document.getElementById('btn-reset').addEventListener('click',reset);
+document.getElementById('btn-step').addEventListener('click',doStep);
+document.getElementById('btn-play').addEventListener('click',()=>{
+  if(playTimer){ stopPlay(); return; }
+  if(stepIdx>=steps.length) stepIdx=0;
+  document.getElementById('btn-play').textContent='⏸ Pausa';
+  doStep();
+  const spd=()=>1600-parseInt(document.getElementById('speed').value);
+  playTimer=setInterval(()=>{ if(stepIdx>=steps.length){stopPlay();return;} doStep(); },spd());
+});
+reset();
+</script>
+</body>
+</html>

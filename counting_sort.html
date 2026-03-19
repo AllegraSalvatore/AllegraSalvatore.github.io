@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Counting Sort · Cormen CLRS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Playfair+Display:ital,wght@0,700;0,900;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --white: #ffffff;
+  --off:   #f7f6f3;
+  --paper: #faf9f7;
+  --rule:  #e0ddd8;
+  --rule2: #ccc9c2;
+  --ink:   #1a1816;
+  --ink2:  #3d3b38;
+  --ink3:  #7a7670;
+  --red:   #c0392b;
+  --red-t: #fdf0ee;
+  --blue:  #1a4e8c;
+  --blue-t:#eef3fb;
+  --green: #1a7a4a;
+  --green-t:#edfaf3;
+  --gold:  #b8860b;
+  --gold-t:#fdf8e8;
+  --purple:#6b21a8;
+  --purple-t:#f5f0fd;
+  --teal:  #0d6e6e;
+  --teal-t:#e6f4f4;
+}
+
+body {
+  background: var(--white);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+}
+
+/* ═══ MASTHEAD ═══ */
+.masthead {
+  border-bottom: 3px double var(--ink);
+  padding: 1.8rem 3rem 1.4rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 1rem;
+  background: var(--white);
+  position: relative;
+}
+.masthead::after {
+  content: '';
+  position: absolute;
+  bottom: -6px; left: 0; right: 0;
+  height: 1px; background: var(--ink);
+}
+.masthead-sup {
+  font-family: 'DM Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: .4rem;
+}
+.masthead h1 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: clamp(1.8rem, 4.5vw, 3rem);
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.masthead h1 em {
+  font-style: italic;
+  font-weight: 700;
+  color: var(--red);
+}
+.masthead-badges {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+  align-items: flex-end;
+}
+.badge-pill {
+  font-family: 'DM Mono', monospace;
+  font-size: .65rem;
+  font-weight: 500;
+  padding: .3rem .85rem;
+  border: 1.5px solid;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+.badge-red    { border-color: var(--red);    color: var(--red);    background: var(--red-t); }
+.badge-green  { border-color: var(--green);  color: var(--green);  background: var(--green-t); }
+.badge-blue   { border-color: var(--blue);   color: var(--blue);   background: var(--blue-t); }
+.badge-gold   { border-color: var(--gold);   color: var(--gold);   background: var(--gold-t); }
+
+/* ═══ LAYOUT ═══ */
+.container { max-width: 1280px; margin: 0 auto; padding: 1.8rem 3rem; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.8rem; margin-bottom: 1.8rem; }
+@media(max-width:860px){ .two-col { grid-template-columns: 1fr; } }
+
+/* ═══ SECTION TITLE ═══ */
+.sec-title {
+  font-family: 'DM Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: .7rem;
+  padding-bottom: .4rem;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.sec-title .sigil {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  color: var(--red);
+  font-size: .95rem;
+}
+
+/* ═══ CARDS ═══ */
+.card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--red);
+  padding: 1.3rem;
+  margin-bottom: 1.4rem;
+}
+.card.phase-c { border-left-color: var(--blue); }
+.card.phase-b { border-left-color: var(--green); }
+.card.phase-out { border-left-color: var(--gold); }
+
+.theory-p {
+  font-size: .8rem;
+  line-height: 1.78;
+  color: var(--ink2);
+  margin-bottom: .55rem;
+}
+.formula {
+  font-family: 'DM Mono', monospace;
+  font-size: .78rem;
+  background: var(--white);
+  border: 1px solid var(--rule2);
+  border-left: 3px solid var(--red);
+  padding: .5rem .9rem;
+  margin: .6rem 0;
+  color: var(--red);
+  font-weight: 500;
+}
+
+/* ═══ COMPLEXITY ═══ */
+.cpx-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .5rem;
+  margin-top: .8rem;
+}
+@media(max-width:700px){ .cpx-grid { grid-template-columns: 1fr 1fr; } }
+.cpx-box { border: 1px solid var(--rule); padding: .5rem .7rem; background: var(--white); }
+.cpx-box .lbl { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); margin-bottom: .15rem; }
+.cpx-box .val { font-family: 'DM Mono', monospace; font-size: .82rem; font-weight: 500; color: var(--red); }
+
+/* ═══ PSEUDO ═══ */
+.pseudo {
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  line-height: 2;
+  background: var(--off);
+  border: 1px solid var(--rule);
+  padding: 1.1rem 1.3rem;
+  overflow-x: auto;
+}
+.pl { display: block; padding: .05rem .35rem; border-radius: 2px; white-space: pre; color: var(--ink3); transition: all .2s; }
+.pl.act  { background: var(--gold-t); color: var(--gold); font-weight: 500; }
+.pl.upd  { background: var(--green-t); color: var(--green); font-weight: 500; }
+.pl.red  { background: var(--red-t); color: var(--red); font-weight: 500; }
+.kw  { color: var(--blue); font-weight: 500; }
+.fn  { color: var(--ink); font-weight: 500; }
+.cmt { color: var(--rule2); font-style: italic; }
+.ph  { color: var(--red); font-weight: 500; } /* phase comment */
+
+/* ═══ CONTROLS ═══ */
+.ctrl-bar {
+  display: flex; align-items: center; gap: .7rem; flex-wrap: wrap;
+  padding: .85rem 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 1.2rem;
+}
+.btn {
+  font-family: 'DM Mono', monospace;
+  font-size: .7rem; font-weight: 500;
+  letter-spacing: .08em; text-transform: uppercase;
+  padding: .42rem 1rem;
+  border: 1.5px solid var(--ink);
+  background: white; color: var(--ink);
+  cursor: pointer; transition: all .15s;
+}
+.btn:hover { background: var(--ink); color: white; }
+.btn.primary { background: var(--red); border-color: var(--red); color: white; }
+.btn.primary:hover { background: #a12920; }
+.sp-lbl { font-family: 'DM Mono', monospace; font-size: .62rem; color: var(--ink3); letter-spacing: .1em; }
+input[type=range] { accent-color: var(--red); width: 90px; cursor: pointer; }
+.btn-grp { display:flex; gap:.4rem; align-items:center; }
+.btn-grp label { font-family:'DM Mono',monospace; font-size:.62rem; color:var(--ink3); }
+
+/* ═══ STEP INFO ═══ */
+.step-info {
+  font-family: 'DM Mono', monospace;
+  font-size: .74rem;
+  padding: .7rem 1rem;
+  background: var(--red-t);
+  border-left: 3px solid var(--red);
+  color: var(--red);
+  margin-bottom: .8rem;
+  min-height: 2.4rem;
+  line-height: 1.5;
+}
+.step-info.phase-c { background: var(--blue-t); border-color: var(--blue); color: var(--blue); }
+.step-info.phase-b { background: var(--green-t); border-color: var(--green); color: var(--green); }
+.step-info.phase-out { background: var(--gold-t); border-color: var(--gold); color: var(--gold); }
+
+/* ═══ PROGRESS ═══ */
+.prog-wrap { height: 2px; background: var(--rule); margin-bottom: 1.4rem; }
+.prog-fill { height: 100%; background: var(--red); transition: width .3s; }
+
+/* ═══ ARRAY VISUALIZER ═══ */
+.array-section { margin-bottom: 1.5rem; }
+.array-label {
+  font-family: 'DM Mono', monospace;
+  font-size: .6rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: .5rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.array-label .tag {
+  font-size: .58rem;
+  padding: .1rem .45rem;
+  border-radius: 2px;
+  font-weight: 500;
+  letter-spacing: .08em;
+}
+.tag-a    { background: var(--red-t);    color: var(--red);    border: 1px solid var(--red); }
+.tag-c    { background: var(--blue-t);   color: var(--blue);   border: 1px solid var(--blue); }
+.tag-b    { background: var(--green-t);  color: var(--green);  border: 1px solid var(--green); }
+.tag-out  { background: var(--gold-t);   color: var(--gold);   border: 1px solid var(--gold); }
+
+.arr-wrap {
+  display: flex;
+  gap: 0;
+  align-items: flex-end;
+  overflow-x: auto;
+  padding-bottom: .3rem;
+}
+.arr-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+.arr-idx {
+  font-family: 'DM Mono', monospace;
+  font-size: .6rem;
+  color: var(--ink3);
+  margin-bottom: .25rem;
+  min-width: 2.4rem;
+  text-align: center;
+}
+.arr-box {
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1.5px solid var(--rule2);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: .8rem;
+  font-weight: 500;
+  color: var(--ink);
+  transition: background .25s, border-color .25s, color .25s, transform .2s;
+  position: relative;
+}
+.arr-box.empty { color: var(--rule2); border-style: dashed; }
+.arr-box.hl-curr {
+  background: var(--gold-t); border-color: var(--gold); color: var(--gold);
+  transform: translateY(-3px);
+}
+.arr-box.hl-read {
+  background: var(--blue-t); border-color: var(--blue); color: var(--blue);
+  transform: translateY(-3px);
+}
+.arr-box.hl-write {
+  background: var(--green-t); border-color: var(--green); color: var(--green);
+  transform: translateY(-4px);
+  box-shadow: 0 2px 8px rgba(26,122,74,.2);
+}
+.arr-box.hl-decr {
+  background: var(--purple-t); border-color: var(--purple); color: var(--purple);
+  transform: translateY(-3px);
+}
+.arr-box.hl-done {
+  background: var(--green-t); border-color: var(--green); color: var(--green);
+}
+
+/* bar under cell for C array bars */
+.bar-wrap {
+  display: flex;
+  gap: 0;
+  align-items: flex-end;
+  height: 80px;
+  padding-bottom: 0;
+  overflow-x: auto;
+}
+.bar-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 2.4rem;
+  position: relative;
+}
+.bar-inner {
+  width: 1.6rem;
+  background: var(--blue-t);
+  border: 1.5px solid var(--blue);
+  transition: height .3s, background .25s, border-color .25s;
+  position: relative;
+  min-height: 2px;
+}
+.bar-inner.hl-curr { background: var(--gold-t); border-color: var(--gold); }
+.bar-inner.hl-decr { background: var(--purple-t); border-color: var(--purple); }
+.bar-inner.hl-done { background: var(--green-t); border-color: var(--green); }
+.bar-val {
+  font-family: 'DM Mono', monospace;
+  font-size: .62rem;
+  font-weight: 500;
+  color: var(--blue);
+  margin-top: .2rem;
+  transition: color .25s;
+}
+.bar-val.hl-curr { color: var(--gold); }
+.bar-val.hl-decr { color: var(--purple); }
+.bar-val.hl-done { color: var(--green); }
+.bar-key {
+  font-family: 'DM Mono', monospace;
+  font-size: .6rem;
+  color: var(--ink3);
+  margin-top: .15rem;
+}
+
+/* pointer arrow above array */
+.arr-ptr {
+  font-family: 'DM Mono', monospace;
+  font-size: .62rem;
+  color: var(--gold);
+  text-align: center;
+  min-width: 2.4rem;
+  height: 1.2rem;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ═══ PHASE INDICATOR ═══ */
+.phase-bar {
+  display: flex;
+  gap: 0;
+  border: 1.5px solid var(--ink);
+  margin-bottom: 1.4rem;
+  overflow: hidden;
+}
+.phase-step {
+  flex: 1;
+  font-family: 'DM Mono', monospace;
+  font-size: .6rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .5rem .6rem;
+  text-align: center;
+  color: var(--ink3);
+  border-right: 1px solid var(--rule);
+  transition: all .2s;
+  line-height: 1.3;
+}
+.phase-step:last-child { border-right: none; }
+.phase-step.active-a   { background: var(--red-t);    color: var(--red);    border-color: var(--red); font-weight: 500; }
+.phase-step.active-c   { background: var(--blue-t);   color: var(--blue);   border-color: var(--blue); font-weight: 500; }
+.phase-step.active-b   { background: var(--green-t);  color: var(--green);  border-color: var(--green); font-weight: 500; }
+.phase-step.active-out { background: var(--gold-t);   color: var(--gold);   border-color: var(--gold); font-weight: 500; }
+.phase-step.done       { background: var(--off); color: var(--ink3); }
+
+/* ═══ LOG ═══ */
+.log-card { border: 1px solid var(--rule); background: var(--off); padding: .8rem 1rem; }
+.log-inner {
+  font-family: 'DM Mono', monospace;
+  font-size: .67rem;
+  height: 110px; overflow-y: auto; line-height: 1.9; color: var(--ink3);
+}
+.log-inner .e { display: block; border-bottom: 1px solid var(--rule); padding: .03rem 0; }
+.log-inner .e.upd   { color: var(--green); }
+.log-inner .e.phase { color: var(--red); font-weight: 500; }
+.log-inner .e.cinfo { color: var(--blue); }
+.log-inner .e.decr  { color: var(--purple); }
+
+/* ═══ FOOTER ═══ */
+footer {
+  border-top: 3px double var(--ink);
+  padding: 1rem 3rem;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 2rem;
+  font-family: 'DM Mono', monospace;
+  font-size: .64rem; color: var(--ink3); letter-spacing: .1em;
+}
+</style>
+</head>
+<body>
+
+<!-- ══ MASTHEAD ══ -->
+<div class="masthead">
+  <div>
+    <div class="masthead-sup">Ordinamento · Cormen CLRS · Cap. 8.2</div>
+    <h1>Counting <em>Sort</em></h1>
+  </div>
+  <div class="masthead-badges">
+    <span class="badge-pill badge-red">Θ(n+k) temporale</span>
+    <span class="badge-pill badge-green">Θ(n+k) spaziale</span>
+    <span class="badge-pill badge-blue">Stabile · Non comparativo</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ══ THEORY + PSEUDO ══ -->
+  <div class="two-col">
+
+    <div>
+      <div class="sec-title"><span class="sigil">§</span> Teoria</div>
+      <div class="card">
+        <div class="theory-p">
+          Il Counting Sort assume che gli elementi da ordinare siano <strong>interi</strong> in un intervallo noto <strong>[0, k]</strong>. Non esegue confronti — sfrutta i valori stessi come indici.
+        </div>
+        <div class="theory-p"><strong>Fase 1 — Conteggio:</strong> conta quante volte compare ogni valore in A, accumulando in C.</div>
+        <div class="formula">C[i] = |{j : A[j] = i}|</div>
+        <div class="theory-p"><strong>Fase 2 — Prefissi cumulativi:</strong> C[i] diventa il numero di elementi ≤ i. Questo determina la <em>posizione finale</em> di ogni elemento.</div>
+        <div class="formula">C[i] = C[i] + C[i−1]  per i = 1..k</div>
+        <div class="theory-p"><strong>Fase 3 — Posizionamento:</strong> scorre A da destra a sinistra (per <strong>stabilità</strong>), inserisce A[j] in B[C[A[j]]], poi decrementa C[A[j]].</div>
+        <div class="formula">B[ C[A[j]] ] = A[j];  C[A[j]] --</div>
+        <div class="theory-p">La scansione da destra garantisce che elementi con lo stesso valore mantengano l'ordine relativo originale → <strong>algoritmo stabile</strong>.</div>
+        <div class="cpx-grid">
+          <div class="cpx-box"><div class="lbl">Temporale</div><div class="val">Θ(n+k)</div></div>
+          <div class="cpx-box"><div class="lbl">Spaziale</div><div class="val">Θ(n+k)</div></div>
+          <div class="cpx-box"><div class="lbl">Stabile</div><div class="val">✓ sì</div></div>
+          <div class="cpx-box"><div class="lbl">In-place</div><div class="val">✗ no</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-title"><span class="sigil">§</span> Pseudocodice · COUNTING-SORT(A, n, k)</div>
+      <div class="pseudo">
+        <span class="pl"><span class="fn">COUNTING-SORT</span>(A, n, k):</span>
+        <span class="pl" id="pl-init">  B[1..n] = array output  <span class="cmt">// risultato</span></span>
+        <span class="pl" id="pl-c0">  C[0..k] = 0            <span class="cmt">// contatori</span></span>
+        <span class="pl"></span>
+        <span class="pl" id="pl-ph1"><span class="ph">  // ── FASE 1: conta occorrenze ──</span></span>
+        <span class="pl" id="pl-f1a">  <span class="kw">for</span> j = 1 <span class="kw">to</span> n:</span>
+        <span class="pl" id="pl-f1b">    C[A[j]] = C[A[j]] + 1</span>
+        <span class="pl"></span>
+        <span class="pl" id="pl-ph2"><span class="ph">  // ── FASE 2: prefissi cumulativi ──</span></span>
+        <span class="pl" id="pl-f2a">  <span class="kw">for</span> i = 1 <span class="kw">to</span> k:</span>
+        <span class="pl" id="pl-f2b">    C[i] = C[i] + C[i−1]</span>
+        <span class="pl"></span>
+        <span class="pl" id="pl-ph3"><span class="ph">  // ── FASE 3: posiziona (destra→sinistra) ──</span></span>
+        <span class="pl" id="pl-f3a">  <span class="kw">for</span> j = n <span class="kw">downto</span> 1:</span>
+        <span class="pl" id="pl-f3b">    B[ C[A[j]] ] = A[j]</span>
+        <span class="pl" id="pl-f3c">    C[A[j]] = C[A[j]] − 1</span>
+        <span class="pl"></span>
+        <span class="pl">  <span class="kw">return</span> B</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ PHASE BAR ══ -->
+  <div class="phase-bar">
+    <div class="phase-step" id="ph0">① Init<br>C = 0</div>
+    <div class="phase-step" id="ph1">② Conta<br>C[A[j]]++</div>
+    <div class="phase-step" id="ph2">③ Prefissi<br>C[i]+=C[i-1]</div>
+    <div class="phase-step" id="ph3">④ Output<br>B[C[A[j]]]=A[j]</div>
+    <div class="phase-step" id="ph4">✓ Done</div>
+  </div>
+
+  <!-- ══ CONTROLS ══ -->
+  <div class="ctrl-bar">
+    <button class="btn primary" id="btn-play">▶ Play</button>
+    <button class="btn" id="btn-step">→ Step</button>
+    <button class="btn" id="btn-reset">↺ Reset</button>
+    <div class="btn-grp">
+      <label>Vel.:</label>
+      <input type="range" id="speed" min="100" max="1800" value="800" step="100">
+    </div>
+    <div class="btn-grp">
+      <label>Input:</label>
+      <button class="btn" id="btn-random">⚄ Nuovo array</button>
+    </div>
+  </div>
+
+  <div class="step-info" id="step-info">Premi Play o Step per avviare la simulazione.</div>
+  <div class="prog-wrap"><div class="prog-fill" id="progress" style="width:0%"></div></div>
+
+  <!-- ══ ARRAY A (INPUT) ══ -->
+  <div class="array-section">
+    <div class="array-label">
+      <span class="tag tag-a">A</span>
+      Array di input — A[1..n]
+      <span style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--ink3)" id="a-label"></span>
+    </div>
+    <div class="arr-wrap" id="arr-ptr-a" style="margin-bottom:.1rem"></div>
+    <div class="arr-wrap" id="arr-A"></div>
+  </div>
+
+  <!-- ══ C ARRAY (COUNTS + CUMULATIVE) ══ -->
+  <div class="array-section">
+    <div class="array-label">
+      <span class="tag tag-c">C</span>
+      Array contatori — C[0..k]
+      <span style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--ink3)" id="c-label"></span>
+    </div>
+    <div class="arr-wrap" id="arr-ptr-c" style="margin-bottom:.1rem"></div>
+    <div class="arr-wrap" id="arr-C"></div>
+    <div class="bar-wrap" id="bars-C" style="margin-top:.6rem"></div>
+  </div>
+
+  <!-- ══ B ARRAY (OUTPUT) ══ -->
+  <div class="array-section">
+    <div class="array-label">
+      <span class="tag tag-out">B</span>
+      Array di output — B[1..n]
+    </div>
+    <div class="arr-wrap" id="arr-ptr-b" style="margin-bottom:.1rem"></div>
+    <div class="arr-wrap" id="arr-B"></div>
+  </div>
+
+  <!-- ══ LOG ══ -->
+  <div class="log-card">
+    <div class="sec-title"><span class="sigil">§</span> Log operazioni</div>
+    <div class="log-inner" id="log"></div>
+  </div>
+
+</div>
+
+<footer>
+  <span>Counting Sort · Cormen CLRS Cap. 8.2</span>
+  <span>Algoritmo stabile · non comparativo · Θ(n+k)</span>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────────
+// CONFIGURATION
+// ─────────────────────────────────────────────────
+let N = 8, K = 5;
+let A = [3, 1, 4, 1, 5, 2, 3, 2]; // 1-indexed will be A[1..n]
+
+function randomArray(){
+  N = 8 + Math.floor(Math.random()*3); // 8-10 elements
+  K = 5 + Math.floor(Math.random()*3); // range 0..K
+  A = Array.from({length:N}, ()=>Math.floor(Math.random()*(K+1)));
+}
+
+// ─────────────────────────────────────────────────
+// STEP BUILDER
+// ─────────────────────────────────────────────────
+let steps = [], stepIdx = 0, playTimer = null;
+
+function buildSteps(){
+  steps = [];
+  // work with 0-indexed arrays internally, display as 1-indexed
+  const a = A.slice(); // 0-indexed: a[0..n-1]
+  const n = a.length;
+  const k = K;
+  const c = Array(k+1).fill(0);
+  const b = Array(n).fill(null);
+
+  const S = (type, j, i, aSnap, cSnap, bSnap, msg, phase, subphase) => ({
+    type, j, i,
+    A: aSnap.slice(), C: cSnap.slice(), B: bSnap.slice(),
+    msg, phase, subphase
+  });
+
+  // INIT
+  steps.push(S('init', -1, -1, a, c, b, 'Inizializzazione: B[1..n] allocato, C[0..k] = 0', 0, 'init'));
+
+  // FASE 1: count
+  steps.push(S('ph1-start', -1, -1, a, c, b, '── FASE 1: conta le occorrenze di ogni valore in A ──', 1, 'start'));
+  for(let j=0; j<n; j++){
+    const v = a[j];
+    steps.push(S('f1-read', j, -1, a, c.slice(), b, `Leggo A[${j+1}] = ${v}`, 1, 'read'));
+    c[v]++;
+    steps.push(S('f1-inc', j, v, a, c.slice(), b, `C[${v}]++ → C[${v}] = ${c[v]}`, 1, 'inc'));
+  }
+  steps.push(S('f1-done', -1, -1, a, c.slice(), b, `Fase 1 completa — C contiene le frequenze`, 1, 'done'));
+
+  // FASE 2: prefix sums
+  steps.push(S('ph2-start', -1, -1, a, c.slice(), b, '── FASE 2: calcola i prefissi cumulativi di C ──', 2, 'start'));
+  for(let i=1; i<=k; i++){
+    const prev = c[i-1], cur = c[i];
+    steps.push(S('f2-read', -1, i, a, c.slice(), b, `Leggo C[${i}]=${cur} e C[${i-1}]=${prev}`, 2, 'read'));
+    c[i] = c[i] + c[i-1];
+    steps.push(S('f2-sum', -1, i, a, c.slice(), b, `C[${i}] = ${cur} + ${prev} = ${c[i]}  → num elementi ≤ ${i}`, 2, 'sum'));
+  }
+  steps.push(S('f2-done', -1, -1, a, c.slice(), b, `Fase 2 completa — C[i] = num elementi ≤ i`, 2, 'done'));
+
+  // FASE 3: place (right to left)
+  steps.push(S('ph3-start', -1, -1, a, c.slice(), b, '── FASE 3: posiziona gli elementi in B (destra→sinistra) ──', 3, 'start'));
+  for(let j=n-1; j>=0; j--){
+    const v = a[j];
+    const pos = c[v]; // 1-indexed position in B
+    steps.push(S('f3-read', j, v, a, c.slice(), b.slice(), `Leggo A[${j+1}]=${v}, C[${v}]=${pos} → posizione in B`, 3, 'read'));
+    b[pos-1] = v; // pos is 1-indexed, b is 0-indexed
+    steps.push(S('f3-place', j, v, a, c.slice(), b.slice(), `B[${pos}] = ${v}`, 3, 'place'));
+    c[v]--;
+    steps.push(S('f3-decr', j, v, a, c.slice(), b.slice(), `C[${v}]-- → C[${v}] = ${c[v]}  (prossima pos per valore ${v})`, 3, 'decr'));
+  }
+  steps.push(S('done', -1, -1, a, c.slice(), b.slice(), `✓ Ordinamento completato — B = [${b.join(', ')}]`, 4, 'done'));
+}
+
+// ─────────────────────────────────────────────────
+// RENDERERS
+// ─────────────────────────────────────────────────
+function renderArrA(s){
+  const ptr = document.getElementById('arr-ptr-a');
+  const wrap = document.getElementById('arr-A');
+  const n = s.A.length;
+  let ph = '', pw = '';
+  for(let j=0; j<n; j++){
+    const isJ = (s.j === j);
+    const cls = isJ ? (s.type==='f3-read'||s.type==='f3-place'||s.type==='f3-decr'?'hl-curr':'hl-read') : '';
+    ph += `<div class="arr-ptr">${isJ?'▼':''}</div>`;
+    pw += `<div class="arr-cell">
+      <div class="arr-idx">${j+1}</div>
+      <div class="arr-box ${cls}">${s.A[j]}</div>
+    </div>`;
+  }
+  ptr.innerHTML = ph;
+  wrap.innerHTML = pw;
+}
+
+function renderArrC(s){
+  const ptr = document.getElementById('arr-ptr-c');
+  const wrap = document.getElementById('arr-C');
+  const bars = document.getElementById('bars-C');
+  const k = s.C.length - 1;
+  const maxVal = Math.max(...s.C, 1);
+  let ph='', pw='', pb='';
+  for(let i=0; i<=k; i++){
+    const isI = (s.i === i);
+    const isPrev = (s.type === 'f2-sum' && s.i === i);
+    const isDecr = (s.type === 'f3-decr' && s.i === i);
+    const cls = isDecr ? 'hl-decr' : isI ? (s.phase===2?'hl-curr':'hl-read') : '';
+    const barH = Math.max(4, Math.round((s.C[i]/maxVal)*70));
+    const barCls = isDecr?'hl-decr':isI&&s.phase===2?'hl-curr':'';
+    ph += `<div class="arr-ptr">${isI?'▼':''}</div>`;
+    pw += `<div class="arr-cell">
+      <div class="arr-idx">${i}</div>
+      <div class="arr-box ${cls}">${s.C[i]}</div>
+    </div>`;
+    pb += `<div class="bar-cell">
+      <div class="bar-inner ${barCls}" style="height:${barH}px"></div>
+      <div class="bar-val ${barCls}">${s.C[i]}</div>
+      <div class="bar-key">${i}</div>
+    </div>`;
+  }
+  ptr.innerHTML = ph;
+  wrap.innerHTML = pw;
+  bars.innerHTML = pb;
+}
+
+function renderArrB(s){
+  const ptr = document.getElementById('arr-ptr-b');
+  const wrap = document.getElementById('arr-B');
+  const n = s.B.length;
+  let ph='', pw='';
+  for(let j=0; j<n; j++){
+    const v = s.B[j];
+    const isPos = (s.type==='f3-place' && s.C[s.i] === j); // pos-1 check
+    // check if this is the just-written cell: C[v] before decrement = pos => B[pos-1]=v
+    // We'll track by looking at the step
+    let cls = '';
+    if(v !== null){
+      if(s.type==='f3-place' && s.B[j]!==null){
+        // highlight the written position
+        // written pos = old C[v] (before decrement) = current C[v]+1 (we already decremented in place step)
+        // Actually in 'f3-place' step we set B[pos-1]=v where pos=c[v] before decrement
+        // The step stores c BEFORE decrement for f3-read, then f3-place has already set B
+        // We stored c AFTER write in f3-place. pos = c[v]+1 (since decrement not yet applied in f3-place)
+        // Actually: we push f3-place AFTER b[pos-1]=v but BEFORE c[v]--.
+        // So in f3-place: c[v] is still old value. pos = c[v]. B[pos-1] was just set.
+        if(s.type==='f3-place' && j === s.C[s.i]-1) cls='hl-write';
+        else cls = 'hl-done';
+      } else {
+        cls = 'hl-done';
+      }
+    }
+    // simpler: just mark the fresh write
+    if(s.type==='f3-place' && j === s.C[s.i]-1) cls='hl-write';
+    else if(v!==null) cls='hl-done';
+    ph += `<div class="arr-ptr">${(s.type==='f3-place'&&j===s.C[s.i]-1)?'▼':''}</div>`;
+    pw += `<div class="arr-cell">
+      <div class="arr-idx">${j+1}</div>
+      <div class="arr-box ${v===null?'empty':cls}">${v===null?'·':v}</div>
+    </div>`;
+  }
+  ptr.innerHTML = ph;
+  wrap.innerHTML = pw;
+}
+
+function setPhase(phase){
+  ['ph0','ph1','ph2','ph3','ph4'].forEach((id,idx)=>{
+    const el = document.getElementById(id);
+    el.className = 'phase-step';
+    if(idx === phase) {
+      const cls = ['active-a','active-a','active-c','active-b','active-out'][phase]||'';
+      el.className += ' ' + cls;
+    } else if(idx < phase) {
+      el.className += ' done';
+    }
+  });
+}
+
+function unhlPseudo(){ document.querySelectorAll('.pl').forEach(l=>l.classList.remove('act','upd','red')); }
+function hlP(...ids){ ids.forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.add('act'); }); }
+function hlPU(...ids){ ids.forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.add('upd'); }); }
+function hlPR(...ids){ ids.forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.add('red'); }); }
+
+function logAdd(msg, cls=''){
+  const el = document.getElementById('log');
+  const s = document.createElement('span');
+  s.className = `e ${cls}`;
+  s.textContent = msg;
+  el.appendChild(s);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setStepColor(phase){
+  const si = document.getElementById('step-info');
+  si.className = 'step-info';
+  if(phase===1) si.classList.add('phase-c');
+  else if(phase===2) si.classList.add('phase-b');
+  else if(phase>=3) si.classList.add('phase-out');
+}
+
+function renderStep(s){
+  unhlPseudo();
+  document.getElementById('step-info').textContent = s.msg;
+  document.getElementById('progress').style.width = ((stepIdx+1)/steps.length*100)+'%';
+  setStepColor(s.phase);
+
+  // Phase bar
+  setPhase(s.phase);
+
+  // Pseudo highlight
+  if(s.type==='init'){ hlP('pl-init','pl-c0'); }
+  else if(s.type==='ph1-start'){ hlP('pl-ph1'); }
+  else if(s.type==='f1-read'||s.type==='f1-inc'){ hlP('pl-f1a'); hlPU('pl-f1b'); }
+  else if(s.type==='ph2-start'){ hlP('pl-ph2'); }
+  else if(s.type==='f2-read'||s.type==='f2-sum'){ hlP('pl-f2a'); hlPU('pl-f2b'); }
+  else if(s.type==='ph3-start'){ hlP('pl-ph3'); }
+  else if(s.type==='f3-read'){ hlP('pl-f3a'); hlP('pl-f3b'); }
+  else if(s.type==='f3-place'){ hlP('pl-f3a'); hlPU('pl-f3b'); }
+  else if(s.type==='f3-decr'){ hlP('pl-f3a'); hlPU('pl-f3c'); }
+
+  // Render arrays
+  renderArrA(s);
+  renderArrC(s);
+  renderArrB(s);
+
+  // Log
+  if(s.type==='f1-inc') logAdd(`C[${s.i}] = ${s.C[s.i]}`, 'cinfo');
+  else if(s.type==='f2-sum') logAdd(`C[${s.i}] = ${s.C[s.i]}  (prefisso)`, 'upd');
+  else if(s.type==='f3-place') logAdd(`B[${s.C[s.i]}] ← ${s.A[s.j]}`, 'upd');
+  else if(s.type==='f3-decr') logAdd(`C[${s.i}]-- = ${s.C[s.i]}`, 'decr');
+  else if(s.type.includes('start')||s.type==='f1-done'||s.type==='f2-done'||s.type==='done')
+    logAdd(s.msg, 'phase');
+}
+
+// ─────────────────────────────────────────────────
+// SIMULATION CONTROL
+// ─────────────────────────────────────────────────
+function doStep(){
+  if(stepIdx >= steps.length){ stopPlay(); return; }
+  renderStep(steps[stepIdx]);
+  stepIdx++;
+  if(stepIdx >= steps.length) stopPlay();
+}
+
+function stopPlay(){
+  clearInterval(playTimer); playTimer = null;
+  document.getElementById('btn-play').textContent = '▶ Play';
+}
+
+function reset(){
+  stopPlay(); stepIdx = 0; buildSteps();
+  document.getElementById('step-info').textContent = 'Premi Play o Step per avviare la simulazione.';
+  document.getElementById('step-info').className = 'step-info';
+  document.getElementById('progress').style.width = '0%';
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('a-label').textContent = `n=${A.length}`;
+  document.getElementById('c-label').textContent = `k=${K}`;
+  // initial blank render
+  const blank = {type:'init', j:-1, i:-1,
+    A: A.slice(), C: Array(K+1).fill(0), B: Array(A.length).fill(null),
+    phase:0, msg:''};
+  renderArrA(blank); renderArrC(blank); renderArrB(blank);
+  setPhase(0); unhlPseudo();
+  ['ph0','ph1','ph2','ph3','ph4'].forEach(id=>{
+    document.getElementById(id).className='phase-step';
+  });
+}
+
+document.getElementById('btn-reset').addEventListener('click', reset);
+document.getElementById('btn-step').addEventListener('click', doStep);
+document.getElementById('btn-play').addEventListener('click', ()=>{
+  if(playTimer){ stopPlay(); return; }
+  if(stepIdx >= steps.length) stepIdx = 0;
+  document.getElementById('btn-play').textContent = '⏸ Pausa';
+  doStep();
+  const spd = ()=> 1900 - parseInt(document.getElementById('speed').value);
+  playTimer = setInterval(()=>{ if(stepIdx>=steps.length){stopPlay();return;} doStep(); }, spd());
+});
+document.getElementById('btn-random').addEventListener('click', ()=>{
+  randomArray();
+  reset();
+});
+
+reset();
+</script>
+</body>
+</html>

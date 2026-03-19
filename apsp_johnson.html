@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APSP · Algoritmo di Johnson</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&family=Mulish:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff;
+  --off: #f8f8f6;
+  --surface: #f2f2ef;
+  --border: #e2e2dc;
+  --border2: #c8c8c0;
+  --ink: #141412;
+  --ink2: #2e2e2a;
+  --ink3: #828278;
+  --teal: #0d6e6e;
+  --teal-t: #e6f4f4;
+  --orange: #9a4a00;
+  --orange-t: #fef3e6;
+  --purple: #5b2fa0;
+  --purple-t: #f2edfb;
+  --green: #236b35;
+  --green-t: #ebf5ef;
+  --red: #9c1f1f;
+  --red-t: #fceaea;
+  --phase-colors: var(--teal);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Mulish', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.top-bar {
+  background: var(--ink);
+  color: white;
+  padding: .5rem 2.5rem;
+  font-family: 'Space Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+}
+.top-bar span { opacity: .6; }
+
+.header {
+  padding: 2rem 2.5rem 1.5rem;
+  border-bottom: 1.5px solid var(--ink);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.5rem;
+  align-items: end;
+}
+.header h1 {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2rem,5vw,3.2rem);
+  font-weight: 700;
+  line-height: .95;
+  letter-spacing: -.03em;
+}
+.header h1 .ital {
+  font-style: italic;
+  font-weight: 300;
+  color: var(--teal);
+}
+.header .sub {
+  font-family: 'Space Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: .5rem;
+}
+.header-right {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+  align-items: flex-end;
+}
+.pill {
+  font-family: 'Space Mono', monospace;
+  font-size: .65rem;
+  padding: .3rem .8rem;
+  border: 1.5px solid;
+  letter-spacing: .06em;
+}
+.pill.teal { border-color: var(--teal); color: var(--teal); background: var(--teal-t); }
+.pill.orange { border-color: var(--orange); color: var(--orange); background: var(--orange-t); }
+.pill.purple { border-color: var(--purple); color: var(--purple); background: var(--purple-t); }
+
+/* ── Phases nav ── */
+.phases-nav {
+  display: flex;
+  border-bottom: 1.5px solid var(--border);
+  background: var(--off);
+}
+.phase-tab {
+  font-family: 'Space Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .7rem 1.4rem;
+  border-right: 1px solid var(--border);
+  color: var(--ink3);
+  cursor: default;
+  transition: all .2s;
+}
+.phase-tab.active { background: white; color: var(--teal); border-bottom: 2px solid var(--teal); }
+.phase-tab .num {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 14px;
+  font-size: .6rem;
+  margin-right: .3rem;
+}
+
+/* ── Layout ── */
+.container { padding: 1.5rem 2.5rem; max-width: 1200px; margin: 0 auto; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+@media(max-width:800px){ .two-col { grid-template-columns: 1fr; } }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2rem; margin-bottom: 1.5rem; }
+@media(max-width:900px){ .three-col { grid-template-columns: 1fr; } }
+
+/* ── Card ── */
+.card {
+  background: white;
+  border: 1.5px solid var(--border);
+  padding: 1.2rem;
+}
+.card + .card { margin-top: 1.2rem; }
+.card-hd {
+  font-family: 'Space Mono', monospace;
+  font-size: .6rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--teal);
+  padding-bottom: .6rem;
+  margin-bottom: .8rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Theory ── */
+.theory-p { font-size: .8rem; line-height: 1.78; color: var(--ink2); margin-bottom: .5rem; }
+.formula {
+  font-family: 'Space Mono', monospace;
+  font-size: .72rem;
+  background: var(--teal-t);
+  border-left: 3px solid var(--teal);
+  padding: .45rem .8rem;
+  margin: .6rem 0;
+  color: var(--teal);
+  font-weight: 700;
+}
+.cpx-row { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: .8rem; }
+.cpx-b { border: 1.5px solid var(--border); padding: .5rem .7rem; background: var(--off); }
+.cpx-b .lbl { font-family: 'Space Mono', monospace; font-size: .56rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink3); margin-bottom: .2rem; }
+.cpx-b .val { font-family: 'Space Mono', monospace; font-size: .8rem; font-weight: 700; color: var(--teal); }
+
+/* ── Pseudo ── */
+.pseudo {
+  font-family: 'Space Mono', monospace;
+  font-size: .68rem;
+  line-height: 1.9;
+  background: var(--off);
+  border: 1.5px solid var(--border);
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+}
+.pl { display: block; padding: .04rem .3rem; white-space: pre; color: var(--ink3); border-radius: 2px; transition: all .2s; }
+.pl.act { background: var(--orange-t); color: var(--orange); font-weight: 700; }
+.pl.upd { background: var(--green-t); color: var(--green); font-weight: 700; }
+.kw { color: var(--purple); font-weight: 700; }
+.fn { color: var(--ink); font-weight: 700; }
+.cmt { color: var(--border2); font-style: italic; }
+
+/* ── Controls ── */
+.ctrl-bar {
+  display: flex; gap: .7rem; align-items: center; flex-wrap: wrap;
+  padding: .8rem 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+.btn {
+  font-family: 'Space Mono', monospace;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  padding: .4rem .9rem;
+  border: 1.5px solid var(--ink);
+  background: white; color: var(--ink);
+  cursor: pointer; transition: all .15s;
+}
+.btn:hover { background: var(--ink); color: white; }
+.btn.primary { background: var(--teal); border-color: var(--teal); color: white; }
+.btn.primary:hover { background: #094f4f; }
+.sp-lb { font-family: 'Space Mono', monospace; font-size: .58rem; color: var(--ink3); }
+input[type=range] { accent-color: var(--teal); width: 80px; cursor: pointer; }
+
+/* ── Step info ── */
+.step-bx {
+  font-family: 'Space Mono', monospace;
+  font-size: .68rem;
+  padding: .65rem 1rem;
+  background: var(--teal-t);
+  border-left: 3px solid var(--teal);
+  color: var(--teal);
+  margin-bottom: .8rem;
+  min-height: 2.3rem;
+  line-height: 1.5;
+}
+
+/* ── Progress ── */
+.prog { height: 2px; background: var(--border); margin-bottom: 1.2rem; }
+.prog-f { height: 100%; background: var(--teal); transition: width .3s; }
+
+/* ── h(v) nodes ── */
+.h-nodes { display: flex; flex-wrap: wrap; gap: .5rem; }
+.h-node {
+  font-family: 'Space Mono', monospace;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: .3rem .7rem;
+  border: 1.5px solid var(--border);
+  background: white;
+  transition: all .3s;
+}
+.h-node.ready { border-color: var(--teal); color: var(--teal); background: var(--teal-t); }
+.h-node.active { border-color: var(--orange); color: var(--orange); background: var(--orange-t); }
+
+/* ── Edge table ── */
+table.etbl {
+  border-collapse: collapse;
+  font-family: 'Space Mono', monospace;
+  font-size: .67rem;
+  width: 100%;
+}
+table.etbl th, table.etbl td {
+  border: 1px solid var(--border);
+  padding: .32rem .5rem;
+  text-align: center;
+  transition: all .25s;
+}
+table.etbl th { background: var(--off); color: var(--ink3); font-weight: 700; }
+table.etbl td { background: white; }
+table.etbl tr.rw-act td { background: var(--orange-t); color: var(--orange); }
+table.etbl tr.rw-done td { background: var(--teal-t); color: var(--teal); font-weight: 700; }
+
+/* ── PQ ── */
+.pq-list { display: flex; flex-direction: column; gap: .35rem; }
+.pq-item {
+  display: flex; align-items: center; gap: .5rem;
+  font-family: 'Space Mono', monospace;
+  font-size: .7rem;
+  padding: .3rem .7rem;
+  border: 1px solid var(--border);
+  background: white;
+  transition: all .25s;
+}
+.pq-item .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border2); flex-shrink: 0; }
+.pq-item.top { border-color: var(--teal); color: var(--teal); background: var(--teal-t); font-weight: 700; }
+.pq-item.top .dot { background: var(--teal); }
+.pq-item.done { opacity: .35; }
+
+/* ── Matrix ── */
+table.mx {
+  border-collapse: collapse;
+  font-family: 'Space Mono', monospace;
+  font-size: .68rem;
+  width: 100%;
+}
+table.mx th, table.mx td {
+  border: 1px solid var(--border);
+  padding: .34rem .52rem;
+  text-align: center;
+  min-width: 2.2rem;
+  transition: background .25s, color .25s;
+}
+table.mx th { background: var(--off); color: var(--ink3); font-weight: 700; }
+table.mx td { background: white; }
+table.mx td.upd { background: var(--green-t); color: var(--green); font-weight: 700; }
+table.mx td.src { background: var(--teal-t); color: var(--teal); font-weight: 700; }
+table.mx td.inf { color: var(--border2); }
+
+.mat-4col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+@media(max-width:1000px){ .mat-4col { grid-template-columns: 1fr 1fr; } }
+@media(max-width:600px){ .mat-4col { grid-template-columns: 1fr; } }
+
+.card.frozen { opacity:.72; border-style:dashed; }
+.card.frozen .card-hd { color: var(--ink3); }
+.card.prev-card { border-color: var(--orange); }
+.card.prev-card .card-hd { color: var(--orange); }
+.mbadge {
+  font-size:.56rem; letter-spacing:.1em; text-transform:uppercase;
+  padding:.1rem .4rem; border-radius:2px; margin-left:.3rem; vertical-align:middle;
+}
+.mbf { background:var(--surface); color:var(--ink3); }
+.mbp { background:var(--orange-t); color:var(--orange); border:1px solid var(--orange); }
+.mbc { background:var(--teal-t); color:var(--teal); border:1px solid var(--teal); }
+.mbpi { background:var(--purple-t); color:var(--purple); border:1px solid var(--purple); }
+
+/* ── Graph ── */
+.graph-box { border: 1.5px solid var(--border); background: var(--off); display: flex; justify-content: center; padding: .5rem; }
+svg.graph { width: 100%; max-width: 280px; height: 220px; }
+
+/* ── Log ── */
+.log-body {
+  font-family: 'Space Mono', monospace;
+  font-size: .63rem;
+  height: 100px; overflow-y: auto; line-height: 1.9; color: var(--ink3);
+}
+.log-body .e { display: block; border-bottom: 1px solid var(--border); padding: .03rem 0; }
+.log-body .e.upd { color: var(--green); }
+.log-body .e.phase { color: var(--teal); font-weight: 700; }
+
+footer {
+  border-top: 1.5px solid var(--ink);
+  padding: 1rem 2.5rem;
+  display: flex; justify-content: space-between;
+  font-family: 'Space Mono', monospace;
+  font-size: .6rem; color: var(--ink3); letter-spacing: .08em;
+  background: var(--off); margin-top: 2rem;
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span>APSP · Algoritmo III di III · Cormen CLRS</span>
+  <span>Johnson · O(V² log V + VE)</span>
+</div>
+
+<div class="header">
+  <div>
+    <div class="sub">Algoritmo di Johnson</div>
+    <h1>Johnson<br><span class="ital">Algorithm</span></h1>
+  </div>
+  <div class="header-right">
+    <div class="pill teal">Fase 1 · Bellman-Ford · O(VE)</div>
+    <div class="pill orange">Fase 2 · Ri-pesatura · O(E)</div>
+    <div class="pill purple">Fase 3 · Dijkstra × V · O(V² log V + VE)</div>
+  </div>
+</div>
+
+<div class="phases-nav">
+  <div class="phase-tab" id="ptab-0"><span class="num">1</span>Bellman-Ford</div>
+  <div class="phase-tab" id="ptab-1"><span class="num">2</span>Ri-pesatura</div>
+  <div class="phase-tab" id="ptab-2"><span class="num">3</span>Dijkstra</div>
+  <div class="phase-tab" id="ptab-3"><span class="num">✓</span>Risultato</div>
+</div>
+
+<div class="container">
+
+  <div class="two-col">
+    <!-- Theory -->
+    <div>
+      <div class="card">
+        <div class="card-hd">Teoria · 4 fasi</div>
+        <div class="theory-p">Johnson è ottimale per grafi <strong>sparsi</strong>. Gestisce pesi negativi senza cicli negativi combinando Bellman-Ford e Dijkstra.</div>
+        <div class="theory-p"><strong>1.</strong> Aggiunge vertice fittizio <em>s</em> collegato a tutti i nodi con peso 0.</div>
+        <div class="theory-p"><strong>2.</strong> Esegue Bellman-Ford da <em>s</em> per ottenere potenziali h(v).</div>
+        <div class="theory-p"><strong>3.</strong> Ri-pesatura degli archi:</div>
+        <div class="formula">ŵ(u,v) = w(u,v) + h(u) − h(v) ≥ 0</div>
+        <div class="theory-p"><strong>4.</strong> Dijkstra da ogni vertice, poi correzione:</div>
+        <div class="formula">d(u,v) = d̂(u,v) − h(u) + h(v)</div>
+        <div class="cpx-row">
+          <div class="cpx-b"><div class="lbl">Bellman-Ford</div><div class="val">O(VE)</div></div>
+          <div class="cpx-b"><div class="lbl">Dijkstra × V</div><div class="val">O(V²logV+VE)</div></div>
+          <div class="cpx-b"><div class="lbl">Spaziale</div><div class="val">O(V²)</div></div>
+          <div class="cpx-b"><div class="lbl">Grafi sparsi</div><div class="val">≪ Θ(V³)</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <!-- Pseudo -->
+      <div class="card">
+        <div class="card-hd">Pseudocodice</div>
+        <div class="pseudo">
+          <span class="pl"><span class="fn">JOHNSON</span>(G, w):</span>
+          <span class="pl" id="jl0">  G'= G + s, archi (s,v,0) ∀v</span>
+          <span class="pl" id="jl1">  <span class="kw">if</span> <span class="fn">BELLMAN-FORD</span>(G',w,s) = FALSE:</span>
+          <span class="pl" id="jl2">    <span class="kw">return</span> "ciclo negativo"</span>
+          <span class="pl" id="jl3">  h(v) = δ(s,v)  <span class="cmt">// da B-F</span></span>
+          <span class="pl" id="jl4">  <span class="kw">for</span> (u,v) ∈ E:</span>
+          <span class="pl" id="jl5">    ŵ(u,v) = w(u,v)+h(u)−h(v)</span>
+          <span class="pl" id="jl6">  <span class="kw">for</span> u ∈ V:</span>
+          <span class="pl" id="jl7">    d̂[u][·] = <span class="fn">DIJKSTRA</span>(G, ŵ, u)</span>
+          <span class="pl" id="jl8">    D[u][v] = d̂[u][v]−h(u)+h(v)</span>
+          <span class="pl">  <span class="kw">return</span> D, Π</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1rem">
+        <div class="card-hd">Grafo di input</div>
+        <div class="graph-box">
+          <svg class="graph" id="graph" viewBox="0 0 280 220"></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="ctrl-bar">
+    <button class="btn primary" id="btn-play">▶ Play</button>
+    <button class="btn" id="btn-step">→ Step</button>
+    <button class="btn" id="btn-reset">↺ Reset</button>
+    <span class="sp-lb">Velocità:</span>
+    <input type="range" id="speed" min="100" max="1500" value="700" step="100">
+  </div>
+
+  <div class="step-bx" id="step-info">Premi Play o Step per avviare la simulazione.</div>
+  <div class="prog"><div class="prog-f" id="progress" style="width:0%"></div></div>
+
+  <!-- Strutture dati per fasi -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-hd">h(v) — Potenziali Bellman-Ford</div>
+      <div class="h-nodes" id="hvals"></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">ŵ — Archi ri-pesati</div>
+      <table class="etbl" id="edges-tbl">
+        <thead><tr><th>u</th><th>v</th><th>w</th><th>h(u)</th><th>h(v)</th><th>ŵ</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-hd">Dijkstra — Coda di priorità</div>
+      <div class="pq-list" id="pq"></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">d̂ — Distanze Dijkstra corrente (non corrette)</div>
+      <div id="matDhat"></div>
+    </div>
+  </div>
+
+  <div class="mat-4col">
+    <div class="card frozen">
+      <div class="card-hd">W — Pesi originali <span class="mbadge mbf">fisso</span></div>
+      <div id="matW"></div>
+    </div>
+    <div class="card prev-card">
+      <div class="card-hd">D — Righe precedenti <span class="mbadge mbp">prev</span></div>
+      <div id="matDprev"></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">D — Corrente (corretta) <span class="mbadge mbc">live</span></div>
+      <div id="matD"></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">Π — Predecessori <span class="mbadge mbpi">Π</span></div>
+      <div id="matPi"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">Log operazioni</div>
+    <div class="log-body" id="log"></div>
+  </div>
+
+</div>
+
+<footer>
+  <span>APSP · Algoritmo di Johnson</span>
+  <span>Cormen, Leiserson, Rivest, Stein · Introduction to Algorithms</span>
+</footer>
+
+<script>
+const INF=Infinity, N=4;
+const nodes=['1','2','3','4'];
+const W=[[0,3,INF,7],[8,0,2,INF],[5,INF,0,1],[2,INF,-4,0]];
+const edgeList=[];
+for(let i=0;i<N;i++) for(let j=0;j<N;j++) if(i!==j&&W[i][j]!==INF) edgeList.push([i,j,W[i][j]]);
+const pos=[[65,40],[215,40],[215,180],[65,180]];
+
+function fv(v){ return v===INF?'∞':v; }
+function dc(m){ return m.map(r=>r.slice()); }
+
+function drawGraph(hlEdges=[], hlNodes=[]){
+  const svg=document.getElementById('graph');
+  let d=`<defs><marker id="arr" markerWidth="8" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L0,7 L8,3.5 z" fill="#828278" opacity=".7"/></marker></defs>`;
+  for(const [u,v,w] of edgeList){
+    const [x1,y1]=pos[u],[x2,y2]=pos[v];
+    const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy),r=20;
+    const sx=x1+dx/len*r,sy=y1+dy/len*r,ex=x2-dx/len*(r+8),ey=y2-dy/len*(r+8);
+    const cx=(sx+ex)/2-dy/len*14,cy=(sy+ey)/2+dx/len*14;
+    const hl=hlEdges.some(e=>e[0]===u&&e[1]===v);
+    d+=`<path d="M${sx},${sy} Q${cx},${cy} ${ex},${ey}" stroke="${hl?'#0d6e6e':'#c8c8c0'}" stroke-width="${hl?2.5:1.5}" fill="none" marker-end="url(#arr)"/>`;
+    const lx=(sx+2*cx+ex)/4,ly=(sy+2*cy+ey)/4;
+    d+=`<text x="${lx}" y="${ly}" fill="${hl?'#0d6e6e':'#828278'}" font-size="11" font-family="Space Mono,monospace" text-anchor="middle">${w}</text>`;
+  }
+  for(let i=0;i<N;i++){
+    const [x,y]=pos[i],hl=hlNodes.includes(i);
+    const isSrc=hlNodes.length>0&&hlNodes[0]===i&&hl;
+    d+=`<circle cx="${x}" cy="${y}" r="20" fill="${isSrc?'#e6f4f4':hl?'#fef3e6':'white'}" stroke="${isSrc?'#0d6e6e':hl?'#9a4a00':'#828278'}" stroke-width="${hl?2.5:1}"/>`;
+    d+=`<text x="${x}" y="${y}" fill="${isSrc?'#0d6e6e':hl?'#9a4a00':'#141412'}" font-size="13" font-family="Fraunces,serif" font-weight="700" text-anchor="middle" dominant-baseline="middle">${nodes[i]}</text>`;
+  }
+  svg.innerHTML=d;
+}
+
+function buildMx(id, mat, hlFn){
+  const wrap=document.getElementById(id);
+  let h='<table class="mx"><thead><tr><th></th>';
+  for(let j=0;j<N;j++) h+=`<th>${nodes[j]}</th>`;
+  h+='</tr></thead><tbody>';
+  for(let i=0;i<N;i++){
+    h+=`<tr><th>${nodes[i]}</th>`;
+    for(let j=0;j<N;j++){
+      const cls=hlFn?hlFn(i,j):'';
+      const v=mat[i][j];
+      h+=`<td class="${cls}${v===INF?' inf':''}" id="${id}-${i}-${j}">${fv(v)}</td>`;
+    }
+    h+='</tr>';
+  }
+  h+='</tbody></table>';
+  wrap.innerHTML=h;
+}
+
+function renderHvals(h, activeI=-1){
+  const el=document.getElementById('hvals');
+  el.innerHTML='';
+  nodes.forEach((n,i)=>{
+    const d=document.createElement('div');
+    d.className='h-node'+(i===activeI?' active':h[i]!==INF&&h[i]!==0?' ready':'');
+    d.textContent=`h(${n}) = ${fv(h[i])}`;
+    el.appendChild(d);
+  });
+}
+
+function renderEdges(erw, activeIdx=-1){
+  const tb=document.querySelector('#edges-tbl tbody');
+  tb.innerHTML='';
+  erw.forEach((e,i)=>{
+    const tr=document.createElement('tr');
+    tr.className=i===activeIdx?'rw-act':i<activeIdx?'rw-done':'';
+    tr.innerHTML=`<td>${nodes[e.u]}</td><td>${nodes[e.v]}</td><td>${e.w}</td><td>${fv(e.hu)}</td><td>${fv(e.hv)}</td><td>${fv(e.wh)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function renderPQ(dist, visited, top=-1){
+  const el=document.getElementById('pq');
+  el.innerHTML='';
+  [...Array(N).keys()].sort((a,b)=>(dist[a]??INF)-(dist[b]??INF)).forEach(i=>{
+    const d=document.createElement('div');
+    d.className='pq-item'+(visited&&visited[i]?' done':i===top?' top':'');
+    d.innerHTML=`<div class="dot"></div>${nodes[i]}: ${fv(dist[i])}`;
+    el.appendChild(d);
+  });
+}
+
+function logAdd(msg,cls=''){
+  const el=document.getElementById('log');
+  const s=document.createElement('span');
+  s.className=`e ${cls}`;
+  s.textContent=msg;
+  el.appendChild(s);
+  el.scrollTop=el.scrollHeight;
+}
+
+function setPhaseTab(idx){
+  document.querySelectorAll('.phase-tab').forEach((t,i)=>{
+    t.classList.toggle('active', i===idx);
+  });
+}
+
+function unhl(){ document.querySelectorAll('.pl').forEach(l=>l.classList.remove('act','upd')); }
+function hlL(...ids){ ids.forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.add('act'); }); }
+function hlLU(...ids){ ids.forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.add('upd'); }); }
+
+function initPi(){
+  return Array.from({length:N},(_,i)=>Array.from({length:N},(_,j)=>i!==j&&W[i][j]!==INF?i:-1));
+}
+
+// ── build all steps
+let steps=[], stepIdx=0, playTimer=null;
+
+function bellmanFord(){
+  let dist=Array(N).fill(0), pi=Array(N).fill(-1), bfSteps=[];
+  bfSteps.push({type:'bf-init',dist:dist.slice(),pi:pi.slice(),msg:'Bellman-Ford: h(v)=0 · sorgente fittiza s connessa a tutti con peso 0'});
+  for(let iter=0;iter<N-1;iter++){
+    let changed=false;
+    for(const [u,v,w] of edgeList){
+      const cand=dist[u]===INF?INF:dist[u]+w;
+      const imp=cand<dist[v];
+      bfSteps.push({type:'bf-relax',iter,u,v,w,cand,imp,dist:dist.slice(),pi:pi.slice(),
+        msg:imp?`B-F iter ${iter+1}: h[${nodes[v]}] = ${fv(cand)}  (via ${nodes[u]})`
+               :`B-F iter ${iter+1}: ${nodes[u]}→${nodes[v]}: ${fv(cand)} ≥ ${fv(dist[v])}`});
+      if(imp){ dist[v]=cand; pi[v]=u; changed=true; }
+    }
+    if(!changed) break;
+  }
+  bfSteps.push({type:'bf-done',dist:dist.slice(),pi:pi.slice(),msg:'Bellman-Ford completato · potenziali h(v) calcolati'});
+  return {bfSteps,h:dist};
+}
+
+function dijkstra(src, wHat){
+  let dist=Array(N).fill(INF), pi=Array(N).fill(-1), visited=Array(N).fill(false), djSteps=[];
+  dist[src]=0;
+  djSteps.push({type:'dj-init',src,dist:dist.slice(),pi:pi.slice(),visited:visited.slice(),msg:`Dijkstra sorgente ${nodes[src]}: inizializza d̂[${nodes[src]}]=0`});
+  for(let iter=0;iter<N;iter++){
+    let u=-1,minD=INF;
+    for(let i=0;i<N;i++) if(!visited[i]&&dist[i]<minD){ minD=dist[i]; u=i; }
+    if(u===-1) break;
+    visited[u]=true;
+    djSteps.push({type:'dj-ext',src,u,dist:dist.slice(),pi:pi.slice(),visited:visited.slice(),msg:`Dijkstra: estrai min = ${nodes[u]} (d̂=${fv(dist[u])})`});
+    for(let v=0;v<N;v++){
+      if(wHat[u][v]===INF) continue;
+      const cand=dist[u]+wHat[u][v];
+      const imp=cand<dist[v];
+      djSteps.push({type:'dj-relax',src,u,v,cand,imp,dist:dist.slice(),pi:pi.slice(),visited:visited.slice(),
+        msg:imp?`Dijkstra: relax ${nodes[u]}→${nodes[v]}: d̂=${fv(cand)}`:`Dijkstra: ${nodes[u]}→${nodes[v]}: ${fv(cand)} ≥ ${fv(dist[v])}`});
+      if(imp){ dist[v]=cand; pi[v]=u; }
+    }
+  }
+  djSteps.push({type:'dj-done',src,dist:dist.slice(),pi:pi.slice(),visited:visited.slice(),msg:`Dijkstra da ${nodes[src]} completato`});
+  return {djSteps,dist,pi};
+}
+
+function buildSteps(){
+  steps=[];
+  const emptyH=Array(N).fill(0);
+  const emptyD=Array.from({length:N},()=>Array(N).fill(INF));
+  steps.push({type:'phase',phaseIdx:0,hvals:emptyH,erw:[],D:dc(emptyD),prevD:dc(emptyD),dhat:null,Pi:null,msg:'── FASE 1: aggiunta sorgente fittiza s, Bellman-Ford ──'});
+  const {bfSteps,h}=bellmanFord();
+  steps.push(...bfSteps.map(s=>({...s,phaseIdx:0,hvals:h.slice(),erw:[],D:dc(emptyD),prevD:dc(emptyD),dhat:null,Pi:null})));
+
+  steps.push({type:'phase',phaseIdx:1,hvals:h.slice(),erw:[],D:dc(emptyD),prevD:dc(emptyD),dhat:null,Pi:null,msg:'── FASE 2: ri-pesatura archi ŵ(u,v) = w + h(u) − h(v) ──'});
+  let wHat=Array.from({length:N},()=>Array(N).fill(INF));
+  let erw=[];
+  for(const [u,v,w] of edgeList){
+    const wh=w+h[u]-h[v];
+    erw.push({u,v,w,hu:h[u],hv:h[v],wh});
+    wHat[u][v]=wh;
+    steps.push({type:'reweight',phaseIdx:1,u,v,w,wh,hvals:h.slice(),erw:[...erw],D:dc(emptyD),prevD:dc(emptyD),dhat:null,Pi:null,
+      msg:`ŵ(${nodes[u]},${nodes[v]}) = ${w}+${h[u]}−${h[v]} = ${wh}`});
+  }
+
+  const D=Array.from({length:N},()=>Array(N).fill(INF));
+  const Pi=Array.from({length:N},()=>Array(N).fill(-1));
+
+  steps.push({type:'phase',phaseIdx:2,hvals:h.slice(),erw:[...erw],D:dc(D),prevD:dc(D),dhat:null,Pi:dc(Pi),msg:'── FASE 3: Dijkstra da ogni vertice, poi correzione ──'});
+  for(let src=0;src<N;src++){
+    const prevDSnap=dc(D);
+    steps.push({type:'dj-start',phaseIdx:2,src,hvals:h.slice(),erw:[...erw],D:dc(D),prevD:prevDSnap,dhat:null,Pi:dc(Pi),msg:`Dijkstra da sorgente ${nodes[src]}`});
+    const {djSteps,dist:dd,pi:dp}=dijkstra(src,wHat);
+    steps.push(...djSteps.map(s=>({...s,phaseIdx:2,hvals:h.slice(),erw:[...erw],D:dc(D),prevD:prevDSnap,Pi:dc(Pi)})));
+    for(let v=0;v<N;v++){ D[src][v]=dd[v]-h[src]+h[v]; Pi[src][v]=dp[v]; }
+    // store corrected dhat row for display
+    const dhatRow=dd.slice();
+    steps.push({type:'correct',phaseIdx:2,src,hvals:h.slice(),erw:[...erw],D:dc(D),prevD:prevDSnap,dhat:dhatRow,Pi:dc(Pi),
+      msg:`Correzione riga ${nodes[src]}: D[${nodes[src]}][v] = d̂[v](${dhatRow.map(fv).join(',')}) − h(${nodes[src]})(${h[src]}) + h(v)`});
+  }
+  steps.push({type:'done',phaseIdx:3,hvals:h.slice(),erw:[...erw],D:dc(D),prevD:dc(D),dhat:null,Pi:dc(Pi),msg:'✓ Johnson completato · matrice D finale pronta'});
+}
+
+function renderStep(s){
+  unhl();
+  document.getElementById('step-info').textContent=s.msg;
+  document.getElementById('progress').style.width=((stepIdx+1)/steps.length*100)+'%';
+  setPhaseTab(s.phaseIdx??0);
+
+  renderHvals(s.hvals||Array(N).fill(0), s.type==='bf-relax'&&s.imp?s.v:-1);
+  renderEdges(s.erw||[], s.type==='reweight'?s.erw.length-1:-1);
+
+  // PQ
+  if(s.dist) renderPQ(s.dist, s.visited, s.type==='dj-ext'?s.u:-1);
+  else renderPQ(Array(N).fill(INF),[]);
+
+  // d̂ current Dijkstra row
+  if(s.dist){
+    const dhatMat=Array.from({length:N},(_,i)=>i===s.src?s.dist:Array(N).fill(INF));
+    buildMx('matDhat',Array.from({length:N},(_,i)=>s.dist),[]);
+    // simpler: show as single-row highlight
+    const drow=s.dist;
+    let h2='<table class="mx"><thead><tr><th>src</th>';
+    for(let j=0;j<N;j++) h2+=`<th>${nodes[j]}</th>`;
+    h2+='</tr></thead><tbody><tr>';
+    h2+=`<th>${nodes[s.src??0]}</th>`;
+    for(let j=0;j<N;j++){
+      const v=drow[j];
+      const cls=(s.type==='dj-relax'&&j===s.v&&s.imp)?'upd':(s.type==='dj-ext'&&j===s.u)?'src':'';
+      h2+=`<td class="${cls}${v===INF?' inf':''}">${fv(v)}</td>`;
+    }
+    h2+='</tr></tbody></table>';
+    document.getElementById('matDhat').innerHTML=h2;
+  } else {
+    document.getElementById('matDhat').innerHTML='<span style="font-size:.7rem;color:#828278;font-family:Space Mono,monospace">— in attesa Dijkstra —</span>';
+  }
+
+  // W always static
+  buildMx('matW',W,()=>'');
+
+  // D prev
+  if(s.prevD) buildMx('matDprev',s.prevD,(i,j)=>s.type==='correct'&&i===s.src?'src':'');
+  else buildMx('matDprev',Array.from({length:N},()=>Array(N).fill(INF)),()=>'');
+
+  // D current
+  if(s.D) buildMx('matD',s.D,(i,j)=>s.type==='correct'&&i===s.src?'upd':'');
+  else buildMx('matD',Array.from({length:N},()=>Array(N).fill(INF)),()=>'');
+
+  // Pi
+  if(s.Pi){
+    buildMx('matPi',s.Pi,()=>'');
+    for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+      const el=document.getElementById(`matPi-${i}-${j}`);
+      if(el) el.textContent=s.Pi[i][j]==-1?'—':nodes[s.Pi[i][j]];
+    }
+  }
+
+  // pseudo highlight
+  if(s.type==='bf-relax'||s.type==='bf-init'){ hlL('jl0','jl1','jl3'); }
+  else if(s.type==='reweight'){ hlL('jl4','jl5'); }
+  else if(s.type==='dj-ext'||s.type==='dj-relax'){ hlL('jl6','jl7'); }
+  else if(s.type==='correct'){ hlLU('jl8'); }
+
+  if(s.type==='bf-relax') drawGraph([[s.u,s.v]],[s.u,s.v]);
+  else if(s.type==='dj-ext') drawGraph([],[s.src,s.u]);
+  else if(s.type==='dj-relax') drawGraph([[s.u,s.v]],[s.src,s.u,s.v]);
+  else drawGraph();
+
+  if(s.type==='phase') logAdd(s.msg,'phase');
+  else if(s.type==='bf-relax'&&s.imp) logAdd(`h[${nodes[s.v]}] = ${fv(s.cand)}`,'upd');
+  else if(s.type==='reweight') logAdd(`ŵ(${nodes[s.u]},${nodes[s.v]}) = ${fv(s.wh)}`,'upd');
+  else if(s.type==='dj-relax'&&s.imp) logAdd(`d̂[${nodes[s.v]}] = ${fv(s.cand)} (src=${nodes[s.src]})`,'upd');
+  else if(s.type==='correct') logAdd(`Riga ${nodes[s.src]} corretta in D`,'upd');
+  else if(s.type==='done') logAdd('✓ Johnson completato.','phase');
+}
+
+function doStep(){
+  if(stepIdx>=steps.length){ stopPlay(); return; }
+  renderStep(steps[stepIdx]);
+  stepIdx++;
+  if(stepIdx>=steps.length) stopPlay();
+}
+function stopPlay(){ clearInterval(playTimer); playTimer=null; document.getElementById('btn-play').textContent='▶ Play'; }
+
+function reset(){
+  stopPlay(); stepIdx=0; buildSteps();
+  document.getElementById('step-info').textContent='Premi Play o Step per avviare la simulazione.';
+  document.getElementById('progress').style.width='0%';
+  document.getElementById('log').innerHTML='';
+  renderHvals(Array(N).fill(0));
+  renderEdges([]);
+  renderPQ(Array(N).fill(INF),[]);
+  document.getElementById('matDhat').innerHTML='<span style="font-size:.7rem;color:#828278;font-family:Space Mono,monospace">— in attesa Dijkstra —</span>';
+  buildMx('matW',W,()=>'');
+  buildMx('matDprev',Array.from({length:N},()=>Array(N).fill(INF)),()=>'');
+  buildMx('matD',Array.from({length:N},()=>Array(N).fill(INF)),()=>'');
+  buildMx('matPi',Array.from({length:N},()=>Array(N).fill(-1)),()=>'');
+  for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+    const el=document.getElementById(`matPi-${i}-${j}`);
+    if(el) el.textContent='—';
+  }
+  drawGraph(); unhl(); setPhaseTab(0);
+}
+
+document.getElementById('btn-reset').addEventListener('click',reset);
+document.getElementById('btn-step').addEventListener('click',doStep);
+document.getElementById('btn-play').addEventListener('click',()=>{
+  if(playTimer){ stopPlay(); return; }
+  if(stepIdx>=steps.length) stepIdx=0;
+  document.getElementById('btn-play').textContent='⏸ Pausa';
+  doStep();
+  const spd=()=>1600-parseInt(document.getElementById('speed').value);
+  playTimer=setInterval(()=>{ if(stepIdx>=steps.length){stopPlay();return;} doStep(); },spd());
+});
+reset();
+</script>
+</body>
+</html>
