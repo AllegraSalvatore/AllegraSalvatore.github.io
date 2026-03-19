@@ -5,18 +5,11 @@
   "title": "Notes",
   "items": [
     {
-      "date": "2024 · Algorithms",
+      "date": "2025 · Algorithms",
       "title": "Why Johnson's Algorithm Beats Floyd-Warshall on Sparse Graphs",
       "excerpt": "An intuitive walkthrough of reweighting, the role of Bellman-Ford as a preprocessor, and the asymptotic crossover point.",
       "topics": ["APSP", "Graphs", "Complexity"],
       "href": "https://allegrasalvatore.github.io/notes/johnson_vs_floyd_warshall_grafi_sparsi.html"
-    },
-    {
-      "date": "2024 · ML",
-      "title": "Gradient Descent — an Intuition Beyond the Formula",
-      "excerpt": "Going from the textbook update rule to a geometric understanding of loss landscapes, saddle points, and momentum.",
-      "topics": ["ML", "Optimization"],
-      "href": "#"
     },
     {
       "date": "2024 · Photography",
