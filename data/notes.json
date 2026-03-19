@@ -1,22 +1,19 @@
 {
-  "id": "notes",
-  "type": "notes",
-  "eyebrow": "Writing & Study Notes",
-  "title": "Notes",
-  "items": [
-    {
-      "date": "2025 · Algorithms",
-      "title": "Why Johnson's Algorithm Beats Floyd-Warshall on Sparse Graphs",
-      "excerpt": "An intuitive walkthrough of reweighting, the role of Bellman-Ford as a preprocessor, and the asymptotic crossover point.",
-      "topics": ["APSP", "Graphs", "Complexity"],
-      "href": "https://allegrasalvatore.github.io/notes/johnson_vs_floyd_warshall_grafi_sparsi.html"
-    },
-    {
-      "date": "2024 · Photography",
-      "title": "The Mathematics of Light: Exposure as an Algorithm",
-      "excerpt": "ISO, aperture, shutter speed as a three-variable optimization problem. The histogram as a loss function.",
-      "topics": ["Photography", "Optics"],
-      "href": "#"
-    }
+  "id": "about",
+  "type": "about",
+  "eyebrow": "Who I Am",
+  "title": "About",
+  "bio": [
+    "I'm <strong>Sal All</strong> — a developer, researcher, and photographer based in <em>Sicily</em>. I work at the intersection of algorithms, data, and visual thinking.",
+    "My technical work spans <strong>algorithm design and analysis</strong>, <strong>software development</strong>, <strong>machine learning</strong>, and <strong>data science</strong>. I'm particularly interested in making complex computational ideas accessible through interactive visualization.",
+    "Away from the keyboard I photograph — chasing light, geometry, and the small decisive moments that most people walk past. The same precision that makes a good algorithm makes a good photograph."
+  ],
+  "bio_note": "This site is a living index: work in progress, updated as new projects and notes accumulate.",
+  "links": [
+    { "icon": "gh", "label": "GitHub",         "sub": "@salall",        "href": "https://github.com/" },
+    { "icon": "@",  "label": "Email",           "sub": "your@email.com", "href": "mailto:your@email.com" },
+    { "icon": "in", "label": "LinkedIn",        "sub": "Connect",        "href": "https://linkedin.com/" },
+    { "icon": "x",  "label": "Twitter / X",     "sub": "@salall",        "href": "https://twitter.com/" },
+    { "icon": "cv", "label": "Curriculum Vitae","sub": "PDF ↓",          "href": "#" }
   ]
 }
