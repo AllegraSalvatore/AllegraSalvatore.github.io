@@ -5,27 +5,9 @@
   "title": "Projects",
   "items": [
     {
-      "name": "Project Alpha",
-      "description": "A brief description of what this project does and why it matters",
-      "tags": ["Python", "ML"],
-      "href": "#"
-    },
-    {
-      "name": "Research Tool",
-      "description": "Academic research project — methodology and results",
-      "tags": ["Research", "Data"],
-      "href": "#"
-    },
-    {
-      "name": "Open Source Contrib.",
-      "description": "Contributions to open source libraries and tools",
-      "tags": ["OSS", "GitHub"],
-      "href": "#"
-    },
-    {
-      "name": "Data Pipeline",
-      "description": "End-to-end data processing and visualization system",
-      "tags": ["ETL", "Viz"],
+      "name": "Project BotQuake",
+      "description": "Update Soon",
+      "tags": ["Python"],
       "href": "#"
     }
   ]
