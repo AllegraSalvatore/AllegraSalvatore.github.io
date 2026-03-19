@@ -22,7 +22,6 @@
     "data/algorithms.json",
     "data/projects.json",
     "data/photography.json",
-    "data/notes.json",
-    "data/about.json"
+    "data/notes.json"
   ]
 }
