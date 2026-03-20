@@ -12,8 +12,7 @@
     { "label": "Algorithms",  "href": "#algorithms"  },
     { "label": "Projects",    "href": "#projects"    },
     { "label": "Photography", "href": "#photography" },
-    { "label": "Notes",       "href": "#notes"       },
-    { "label": "About",       "href": "#about"       }
+    { "label": "Notes",       "href": "#notes"       }
   ],
 
   "hero": "data/hero.json",
