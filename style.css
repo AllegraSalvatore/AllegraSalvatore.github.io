@@ -719,3 +719,31 @@ footer {
   .pm-cell:nth-child(1)        { grid-row: span 1; }
   .notes-grid                  { grid-template-columns: 1fr; }
 }
+
+
+/* ── COLLAPSED SECTIONS (title only) + DEDICATED PAGE ─────── */
+.sec-title-link {
+  display: inline-block;
+  margin-bottom: 0;
+  color: inherit;
+  text-decoration: none;
+  transition: color .2s;
+}
+.sec-title-link:hover { color: var(--rust); }
+
+.back-link {
+  display: block;
+  padding: 6rem 4rem 0;
+  font-family: var(--mono);
+  font-size: .7rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--silver);
+  text-decoration: none;
+  transition: color .2s;
+}
+.back-link:hover { color: var(--rust); }
+
+@media (max-width: 768px) {
+  .back-link { padding: 5rem 2rem 0; }
+}

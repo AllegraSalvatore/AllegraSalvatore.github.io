@@ -200,6 +200,15 @@ function buildAbout(sec) {
   return wrap;
 }
 
+// Collapsed version: only eyebrow + title, linking to a dedicated page (?s=<id>)
+function buildTitleOnly(sec) {
+  const wrap = mk('section', 'section-dark'); wrap.id = sec.id;
+  wrap.innerHTML = `
+    <div class="sec-eyebrow">${esc(sec.eyebrow)}</div>
+    <a class="sec-title sec-title-link" href="?s=${encodeURIComponent(sec.id)}">${esc(sec.title)} ↗</a>`;
+  return wrap;
+}
+
 // Registry — add new section types here
 const SECTION_BUILDERS = {
   'card-grid':   buildCardGrid,
@@ -211,10 +220,20 @@ const SECTION_BUILDERS = {
 
 function renderSections(sections) {
   const root = $('sections-root');
+  const only = new URLSearchParams(location.search).get('s'); // dedicated page?
+
+  if (only) {
+    $('hero-section').style.display = 'none';
+    const back = mk('a', 'back-link', '← Home');
+    back.href = './';
+    root.appendChild(back);
+  }
+
   sections.forEach(sec => {
+    if (only && sec.id !== only) return;            // dedicated page: show only that section
     const fn = SECTION_BUILDERS[sec.type];
-    if (fn) root.appendChild(fn(sec));
-    else console.warn('[site.json] Unknown section type:', sec.type);
+    if (!fn) { console.warn('[site.json] Unknown section type:', sec.type); return; }
+    root.appendChild(sec.collapsed && !only ? buildTitleOnly(sec) : fn(sec));
   });
 }
 
