@@ -1,6 +1,7 @@
 {
   "id": "algorithms",
   "type": "card-grid",
+  "collapsed": true,
   "eyebrow": "Interactive Simulations",
   "title": "Algorithms\n& Data Structures",
   "items": [
