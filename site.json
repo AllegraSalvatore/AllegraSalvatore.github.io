@@ -11,8 +11,8 @@
   "nav": [
     { "label": "Algorithms",  "href": "#algorithms"  },
     { "label": "Projects",    "href": "#projects"    },
-    { "label": "Photography", "href": "#photography" },
-    { "label": "Notes",       "href": "#notes"       }
+    { "label": "Photography", "href": "#photography" }
+    
   ],
 
   "hero": "data/hero.json",
