@@ -20,6 +20,6 @@
   "sections": [
     "data/algorithms.json",
     "data/projects.json",
-    "data/photography.json",
+    "data/photography.json"
   ]
 }
